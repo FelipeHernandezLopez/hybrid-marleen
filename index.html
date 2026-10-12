@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hybrid Marleen">
+<meta name="theme-color" content="#111214">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=1">
+<link rel="icon" type="image/png" href="icon-192.png?v=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<title>Hybrid · Marleen</title>
+<style>
+:root{--bg:#111214;--c1:#1B1D1F;--c2:#24272A;--line:rgba(255,255,255,.07);--tx:#F2F3F0;--mu:#7E847A;--mu2:#A3A99F;--lime:#C6F432;--limeInk:#1B2404;--ok:#5FD08A;--warn:#F2B94B;--red:#FF6B5E;--strava:#FC4C02;--or:#FF8A1F;--nav:62px;--hdr:56px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--tx);font:400 14px/1.5 Inter,-apple-system,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;color:inherit}
+a{color:var(--lime)}
+.cond{font-family:"Barlow Condensed",Inter,sans-serif;letter-spacing:.3px;text-transform:uppercase}
+.hdr{position:fixed;top:0;left:0;right:0;height:calc(var(--hdr) + env(safe-area-inset-top));padding:env(safe-area-inset-top) 18px 0;background:var(--bg);display:flex;align-items:center;justify-content:space-between;z-index:50;border-bottom:1px solid var(--line)}
+.logo{font-family:"Barlow Condensed";font-weight:700;font-size:24px;letter-spacing:1px}
+.logo i{color:var(--lime);font-style:normal}
+.logo{display:flex;align-items:center;gap:9px}
+.logo img{width:30px;height:30px;border-radius:8px}
+.hero{position:relative}
+.hero .sky{display:block;width:100%;height:auto;margin-top:12px;opacity:.28;pointer-events:none}
+.phase svg{width:40px;height:26px;flex-shrink:0;align-self:center}
+.phase .pt{display:flex;flex-direction:column}
+.phase .pm{font-family:Inter;font-size:12px;color:var(--mu);font-weight:500;text-transform:none;margin-top:2px}
+.bean{width:18px;height:23px;display:block;margin:0 auto 2px}
+.seal{display:block;margin:18px auto 4px;width:190px;height:190px}
+#splash{position:fixed;inset:0;background:var(--bg);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .45s}
+#splash.out{opacity:0;pointer-events:none}
+#splash .seal{width:210px;height:210px;margin:0}
+#splash p{font-size:11px;letter-spacing:2px;color:var(--mu);margin-top:14px;text-transform:uppercase}
+.hr{text-align:right;font-size:11px;color:var(--mu);line-height:1.3}
+.hr b{display:block;color:var(--lime);font-family:"Barlow Condensed";font-size:15px;letter-spacing:.6px;font-weight:600}
+main{position:fixed;top:calc(var(--hdr) + env(safe-area-inset-top));bottom:calc(var(--nav) + env(safe-area-inset-bottom));left:0;right:0}
+.panel{display:none;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 34px}
+.panel.on{display:block}
+nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:#0C0D0E;border-top:1px solid var(--line);display:flex;z-index:50}
+nav button{flex:1;background:none;border:none;color:var(--mu);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase}
+nav svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--lime)}
+.card{background:var(--c1);border-radius:16px;padding:15px;margin-bottom:12px}
+.sec{font-family:"Barlow Condensed";font-weight:600;font-size:14px;letter-spacing:1.6px;text-transform:uppercase;color:var(--mu);margin:20px 2px 9px;display:flex;justify-content:space-between;align-items:center}
+.sec:first-child{margin-top:2px}
+.mu{color:var(--mu)}.mu2{color:var(--mu2)}.sm{font-size:12px}
+.row{display:flex;align-items:center;gap:10px}.sp{justify-content:space-between}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:var(--c2);color:var(--mu2)}
+.pill.l{background:rgba(198,244,50,.12);color:var(--lime)}
+.pill.w{background:rgba(242,185,75,.12);color:var(--warn)}
+.datebar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.datebar button{width:42px;height:42px;border-radius:14px;border:none;background:var(--c1);font-size:20px}
+.datebar .d{text-align:center;font-weight:600}
+.datebar .d small{display:block;color:var(--mu);font-weight:500;font-size:11px;letter-spacing:.5px}
+.hero{padding:4px 2px 6px}
+.hero h1{font-family:"Barlow Condensed";font-weight:700;font-size:38px;line-height:.98;letter-spacing:.2px;text-transform:uppercase;margin:8px 0 6px}
+.hero p{color:var(--mu2);font-size:13px}
+.ex{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--c1);border-radius:14px;padding:13px 14px;margin-bottom:7px;cursor:pointer}
+.ex .n{font-weight:600;font-size:14px}
+.ex .s{font-size:12px;color:var(--mu)}
+.ex .k{text-align:right;flex-shrink:0}
+.ex .k b{display:block;color:var(--lime);font-family:"Barlow Condensed";font-size:20px;font-weight:600;line-height:1}
+.ex .k small{font-size:11px;color:var(--mu)}
+.wod{background:var(--lime);color:var(--limeInk);border-radius:18px;padding:16px;margin:4px 0 12px}
+.wod .t{font-family:"Barlow Condensed";font-weight:700;font-size:26px;line-height:1;text-transform:uppercase}
+.wod .f{font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;opacity:.75;margin-bottom:6px}
+.wod ul{list-style:none;margin-top:10px}
+.wod li{padding:6px 0;border-top:1px solid rgba(27,36,4,.15);font-weight:500;font-size:14px}
+.wod .note{font-size:12px;margin-top:10px;opacity:.8}
+.wod .chips{margin-top:10px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:none;background:var(--c2);border-radius:20px;padding:7px 12px;font-size:12px;font-weight:600}
+.wod .chip{background:rgba(27,36,4,.12);color:var(--limeInk)}
+.list{background:var(--c1);border-radius:14px;padding:4px 14px;margin-bottom:12px}
+.li{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+.li:last-child{border:none}
+.li b{font-weight:500;color:var(--mu2);white-space:nowrap}
+details.list summary{list-style:none;cursor:pointer;padding:12px 0;display:flex;justify-content:space-between;font-weight:600}
+details.list summary::-webkit-details-marker{display:none}
+details.list summary span{color:var(--mu);font-weight:500;font-size:12px}
+details.list[open] summary{border-bottom:1px solid var(--line)}
+.strava{display:flex;align-items:center;gap:12px;background:rgba(95,208,138,.1);border:1px solid rgba(95,208,138,.28);border-radius:14px;padding:12px 14px;margin-bottom:12px}
+.strava .ic{width:34px;height:34px;border-radius:10px;background:#D10027;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:15px;flex-shrink:0}
+.strava b{color:var(--ok)}
+.macros{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:6px;margin-top:10px}
+.mac{background:var(--c2);border-radius:12px;padding:10px 6px;text-align:center}
+.mac b{display:block;font-family:"Barlow Condensed";font-size:24px;font-weight:600;line-height:1}
+.mac small{font-size:10px;color:var(--mu);letter-spacing:.6px;text-transform:uppercase}
+.mac.k b{color:var(--lime)}
+.study{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.st{border:1px solid var(--line);background:var(--c2);border-radius:14px;padding:12px 8px;text-align:center}
+.st .i{font-size:20px}
+.st b{display:block;font-size:13px;margin-top:4px}
+.st small{display:block;font-size:11px;color:var(--mu)}
+.st.ok{background:var(--lime);color:var(--limeInk);border-color:var(--lime)}
+.st.ok small{color:var(--limeInk);opacity:.7}
+.btn{width:100%;padding:14px;border:none;border-radius:14px;background:var(--lime);color:var(--limeInk);font-weight:700;font-size:14px;letter-spacing:.3px}
+.btn2{padding:11px 14px;border:none;border-radius:12px;background:var(--c2);font-size:13px;font-weight:600}
+.btn2.s{background:rgba(252,76,2,.15);color:var(--strava)}
+.btn2.r{color:var(--red)}
+.inp{width:100%;background:var(--c2);border:1px solid transparent;border-radius:12px;color:var(--tx);padding:11px 12px;font-size:15px;outline:none;-webkit-appearance:none;font-family:inherit}
+.inp:focus{border-color:rgba(198,244,50,.5)}
+.lbl{font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--mu);margin-bottom:6px}
+.fld{margin-bottom:12px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.wk{background:var(--c1);border-radius:16px;padding:13px;margin-bottom:10px;border:1px solid transparent}
+.wk.cur{border-color:rgba(198,244,50,.5)}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px}
+.day{border:none;background:var(--c2);border-radius:10px;padding:7px 0 6px;text-align:center;font-size:10px;font-weight:700;position:relative;color:var(--tx)}
+.day small{display:block;font-size:9px;color:var(--mu);font-weight:600;margin-top:1px}
+.day.rest{opacity:.4}
+.day.today{outline:1.5px solid var(--lime)}
+.day.ok{background:rgba(95,208,138,.16)}
+.day.ok::after{content:"";position:absolute;top:4px;right:4px;width:5px;height:5px;border-radius:50%;background:var(--ok)}
+.phase{font-family:"Barlow Condensed";font-size:20px;font-weight:700;text-transform:uppercase;margin:22px 2px 8px;display:flex;align-items:baseline;gap:8px}
+.phase small{font-family:Inter;font-size:12px;color:var(--mu);font-weight:500;text-transform:none}
+.count{display:flex;gap:10px;margin-bottom:12px}
+.count .c{flex:1;background:var(--c1);border-radius:16px;padding:13px}
+.count b{display:block;font-family:"Barlow Condensed";font-size:34px;font-weight:700;line-height:1}
+.count .c.l b{color:var(--lime)}
+.tq{background:var(--c1);border-radius:14px;padding:12px 14px;margin-bottom:7px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:90;display:none}.mbg.on{display:block}
+.modal{position:fixed;left:0;right:0;bottom:0;max-height:86vh;background:var(--c1);border-radius:22px 22px 0 0;z-index:91;display:none;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}
+.modal.on{display:flex}
+.mh{display:flex;justify-content:space-between;align-items:center;padding:16px 18px 10px}
+.mh b{font-family:"Barlow Condensed";font-size:24px;font-weight:700;text-transform:uppercase;line-height:1}
+.mh button{width:32px;height:32px;border-radius:50%;border:none;background:var(--c2);color:var(--mu2);font-size:15px}
+.mb{padding:4px 18px 22px;overflow-y:auto}
+.mb ol,.mb ul{padding-left:18px}.mb li{margin:7px 0;color:var(--mu2)}
+.knee{background:rgba(242,185,75,.1);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:13px;margin-top:12px}
+#toast{position:fixed;left:50%;bottom:calc(var(--nav) + 18px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#2B2F33;color:#fff;padding:10px 18px;border-radius:22px;font-size:13px;z-index:200;opacity:0;pointer-events:none;transition:opacity .25s;max-width:90vw;text-align:center}
+.pill.o{background:rgba(255,138,31,.14);color:var(--or)}
+.fence{display:flex;align-items:center;gap:12px;background:rgba(255,138,31,.09);border:1px solid rgba(255,138,31,.28);border-radius:14px;padding:12px 14px;margin-bottom:12px}
+.fence .ic{width:34px;height:34px;border-radius:10px;background:var(--or);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.fence .ic svg{width:22px;height:22px}
+.fence b{color:var(--or)}
+</style>
+</head>
+<body>
+<div id="splash"></div>
+<header class="hdr"><div class="logo"><img src="icon-192.png?v=1" alt=""><span>HYBRID<i>.</i></span></div><div class="hr" id="hr"></div></header>
+<main>
+  <section id="p-hoy" class="panel on"></section>
+  <section id="p-plan" class="panel"></section>
+  <section id="p-tec" class="panel"></section>
+  <section id="p-aj" class="panel"></section>
+</main>
+<nav>
+  <button id="n-hoy" class="on" onclick="show('hoy')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Today</button>
+  <button id="n-plan" onclick="show('plan')"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Plan</button>
+  <button id="n-tec" onclick="show('tec')"><svg viewBox="0 0 24 24"><path d="M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12"/></svg>Technique</button>
+  <button id="n-aj" onclick="show('aj')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</button>
+</nav>
+<div class="mbg" id="mbg" onclick="closeModal()"></div>
+<div class="modal" id="modal"><div class="mh"><b id="mt"></b><button onclick="closeModal()">✕</button></div><div class="mb" id="mbody"></div></div>
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+//  HYBRID · Marleen Buitenhuis
+//  Professional sabre fencer · season Oct 2026 → Jul 2027
+//  Trains at the gym with Felipe + her fencing schedule. Goal: 55 → 60 kg, faster and more explosive.
+//  The app guides; Marleen taps a session as done and, if she wants, logs the kg.
+// ═══════════════════════════════════════════
+const OWNER = "MARLEEN";
+const START = "2026-10-12";      // Monday, week 1
+const END = "2027-07-25";        // end of season
+const WEEKS = 41;
+const PRE = { "2026-10-12": "TU" };   // upper test done with Felipe on Monday 12 Oct
+const LS = "hybrid_marleen_v1";
+const SELF = "https://felipehernandezlopez.github.io/hybrid-marleen/";
+// Polar only accepts Felipe's app as return address: it relays the code to Marleen's sheet and sends her back here
+const POLAR_ID = "8034e007-b5e5-463d-bb19-13dcebc363d8";
+const POLAR_RETURN = "https://felipehernandezlopez.github.io/hybrid-tracker/";
+const DN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DF = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const MN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const PHASE = ["", "Base", "Power", "Competition"];
+const PHASE_SUB = ["", "Strength and muscle: the engine for 60 kg", "Turn strength into speed: jumps, starts, single-leg power", "Stay strong, be fast, arrive fresh"];
+const PHASE_MEAN = ["", "The tulip · grow from the bulb", "The windmill · turn force into power", "The sabre · sharp and ready"];
+const PHASE_ART = ["", "tulip", "mill", "sabre"];
+
+// Tentative weekly schedule (to confirm). Fencing is counted from Polar; the gym sessions fit around it.
+const FENCE = { 0: "17:30 – 20:00", 2: "evening", 3: "morning", 4: "evening" };
+const REST_DOW = 1;                 // Tuesday: always rest
+const GYM_DAYS = [0, 2, 5, 6];      // Mon & Wed morning with Felipe, Sat & Sun
+const PREF = { 0: ["U", "TU", "P", "F", "L", "TL"], 2: ["P", "U", "TU", "F", "L", "TL"], 5: ["L", "TL", "F", "U", "P", "TU"], 6: ["F", "L", "TL", "U", "P", "TU"] };
+const LEGS = { L: 1, TL: 1 };
+
+// 25 y · 172 cm · 55 kg → 60 kg · iron controlled with pills
+const NUT = { p: 110, kRest: 2300, kTrain: 2700, kDouble: 3000 };
+const GOAL_KG = 60;
+
+const DEF = { bw: 55, logs: {}, done: { "2026-10-12": "TU" }, body: [], acts: {}, dayPick: {},
+  lifts: { bench: 35, ohp: 30, pullreps: 5 }, row500: 136,
+  tests: [{ d: "2026-10-12", bench: 35, ohp: 30, preps: 5, bw: 55, note: "Row: 1780 m in 8:05 (damper 6)" }],
+  conn: "", polar: false, sheetSync: "", lastSync: 0, setAt: 0, dirty: false, pushed: "" };
+let S = load();
+let tab = "hoy";
+let viewDate = todayS();
+let openedOn = todayS();
+function load() {
+  try {
+    const p = JSON.parse(localStorage.getItem(LS) || "null");
+    if (!p) return JSON.parse(JSON.stringify(DEF));
+    const o = Object.assign({}, JSON.parse(JSON.stringify(DEF)), p);
+    ["logs", "done", "acts", "dayPick", "lifts"].forEach(function (k) { o[k] = o[k] || {}; });
+    o.body = o.body || []; o.tests = o.tests || []; return o;
+  } catch (e) { return JSON.parse(JSON.stringify(DEF)); }
+}
+function save() { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {} }
+
+// ═══════════════════════════════════════════
+//  EXERCISES · c = how to · k = why it matters for sabre
+//  kg: true = log the weight · per: "hand" for dumbbells · rm: which test sets the load
+// ═══════════════════════════════════════════
+const EX = {
+  squat:   { n: "Back squat", g: "Legs", kg: true, rm: "squat", c: ["Bar on the upper back, feet shoulder-width.", "Sit down and back, knees track over the toes.", "Drive up through the whole foot, chest tall."], k: "The base of your lunge power and of standing in guard for hours." },
+  dl:      { n: "Deadlift", g: "Legs", kg: true, rm: "dl", c: ["Bar over mid-foot, hips back, flat back.", "Push the floor away, bar close to the legs.", "Lock out with the glutes, lower under control."], k: "Posterior chain: hips and hamstrings drive the explosive lunge." },
+  bulg:    { n: "Bulgarian split squat", g: "Legs", kg: true, per: "hand", c: ["Rear foot on a bench, dumbbells at your sides.", "Drop straight down, weight on the front leg.", "Drive up through the front heel."], k: "Single-leg strength for the lunge and the recovery. Do the back leg side too: fencers get lopsided." },
+  nordic:  { n: "Nordic hamstring curl", g: "Legs", c: ["Kneel, heels anchored (partner or bar).", "Lower your body forward as slowly as you can.", "Catch yourself with the hands and push back up."], k: "Protects the hamstrings from the fast lunge: the most common fencing strain." },
+  copen:   { n: "Copenhagen plank", g: "Legs", c: ["Side plank on the forearm, top leg on a bench (knee for the easy version).", "Lift the hips and hold, bottom leg hanging."], k: "Adductors control the lunge recovery and protect the groin." },
+  calf:    { n: "Single-leg calf raise", g: "Legs", kg: true, per: "hand", c: ["On a step, one foot, dumbbell in the same-side hand.", "Full range: deep stretch, high on the toes, 1 s pause."], k: "Ankles and calves: every step in guard and every fleche starts here." },
+  bench:   { n: "Bench press", g: "Upper", kg: true, rm: "bench", c: ["Shoulder blades back and down, feet planted.", "Lower to the lower chest, elbows ~45°.", "Press up without bouncing."] },
+  ohp:     { n: "Overhead press", g: "Upper", kg: true, rm: "ohp", c: ["Standing, bar on the front of the shoulders.", "Glutes and abs tight, press straight up.", "Head through at the top, lower under control."], k: "Shoulder strength and stability for the sabre arm." },
+  pullup:  { n: "Pull-ups", g: "Upper", c: ["Strict: from a full hang, chin over the bar.", "No kipping, control the way down.", "When the top number feels easy, add a light dumbbell."] },
+  dbrow:   { n: "One-arm dumbbell row", g: "Upper", kg: true, per: "hand", c: ["Knee and hand on the bench, flat back.", "Pull the elbow to the hip, pause, lower slowly."] },
+  extrot:  { n: "Cable external rotation", g: "Upper", kg: true, c: ["Elbow at your side, towel between elbow and ribs.", "Rotate the forearm out against the cable, slow back."], k: "Rotator cuff health for the sabre arm: do both arms equally." },
+  pallof:  { n: "Pallof press", g: "Core", kg: true, c: ["Side-on to the cable at chest height.", "Press the hands straight out and hold 2 s without rotating."], k: "Anti-rotation core: keeps the trunk stable while the arm cuts." },
+  broad:   { n: "Broad jump", g: "Power", c: ["Feet hip-width, swing the arms.", "Jump as far as you can, land soft and hold the landing.", "Walk back and reset: every rep is maximal."], k: "Pure horizontal power: your lunge and fleche." },
+  skater:  { n: "Lateral bound", g: "Power", c: ["Bound sideways from one leg to the other.", "Stick each landing for 1 s before the next."], k: "Lateral power and control for changes of direction on the piste." },
+  boxjump: { n: "Box jump", g: "Power", c: ["Mid-height box. Jump up, land soft and tall.", "Step down, never jump down."] },
+  depth:   { n: "Depth jump", g: "Power", c: ["Step off a low box (30 cm).", "Touch the ground and explode up immediately: ground contact as short as possible."], k: "Reactive speed: the instant counter-attack." },
+  mbrot:   { n: "Med-ball rotational throw", g: "Power", c: ["Side-on to a wall, 3-4 kg ball.", "Load the back hip, rotate and throw hard into the wall.", "Both sides."] },
+  flunge:  { n: "Explosive fencing lunge + recovery", g: "Power", c: ["From guard, lunge as fast as possible (no weapon or with it).", "Recover back to guard explosively.", "Full rest between sets: speed, not fatigue."], k: "Turns gym strength into your actual fencing movement." },
+  sprint:  { n: "10 m sprint from guard", g: "Power", c: ["Start in fencing guard.", "Turn and sprint 10 m all-out.", "Walk back: full recovery."] },
+  hclean:  { n: "Hang power clean", g: "Power", kg: true, c: ["Bar above the knees, flat back.", "Jump: extend the hips explosively and shrug.", "Catch on the shoulders in a quarter squat."], k: "Explosive hip extension, the engine of a fast attack." },
+  fsq:     { n: "Front squat", g: "Legs", kg: true, c: ["Bar on the front of the shoulders, elbows high.", "Sit straight down, chest tall, drive up."] },
+  rdl:     { n: "Romanian deadlift", g: "Legs", kg: true, c: ["Bar at the hips, soft knees.", "Push the hips back, bar close, flat back.", "Stand up squeezing the glutes."] },
+  pushpr:  { n: "Push press", g: "Upper", kg: true, c: ["Bar on the shoulders, small dip with the legs.", "Drive with the legs and press the bar overhead."] },
+  sled:    { n: "Sled push", g: "Conditioning", kg: true, c: ["Low body angle, arms straight.", "Short powerful steps, all-out for the distance."] },
+  rsa:     { n: "Repeated sprints · curved treadmill", g: "Conditioning", c: ["Every sprint all-out, the easy part really easy.", "On the curved treadmill: lean forward and drive the knees.", "A bout of sabre is a few seconds: this trains exactly that."], k: "Repeated-sprint ability: still explosive at 14-13." },
+  row:     { n: "Rowing intervals", g: "Conditioning", c: ["Damper 5-6, always the same.", "Hold the split shown, easy rowing between reps."] }
+};
+
+// Sessions. Each exercise: [id, prescription per phase 1/2/3 ("MAIN" = load from your 5RM), note]. Empty = not in that phase.
+const KEYS = {
+  U: { n: "Upper strength", sub: "Press, pull, shoulder health · 50 min", warm: "upper", ex: [
+    ["bench", "MAIN", ""], ["pullup", ["4×3-4", "5×4", "4×5"], "Strict, full hang"], ["ohp", "MAIN2", ""],
+    ["dbrow", ["3×10/side", "3×8/side", "3×8/side"], ""], ["extrot", ["2×15/side", "3×12/side", "3×12/side"], "Light"], ["pallof", ["3×10/side", "3×10/side", "3×12/side"], ""]] },
+  L: { n: "Lower strength", sub: "Squat, hinge, single-leg · 55 min", warm: "lower", ex: [
+    ["squat", "MAIN", ""], ["dl", "MAIN2", ""], ["bulg", ["3×8/leg", "3×6/leg", "3×5/leg"], "Both legs"],
+    ["nordic", ["3×4", "3×5", "3×6"], "Slow lowering"], ["copen", ["3×15 s/side", "3×20 s/side", "3×25 s/side"], ""], ["calf", ["3×12/leg", "3×10/leg", "3×10/leg"], ""]] },
+  P: { n: "Power & speed", sub: "Jumps, throws, sprints · 40 min · fresh legs", warm: "power", ex: [
+    ["broad", ["4×3", "5×3", "4×3"], "Max effort each rep"], ["skater", ["3×5/side", "4×5/side", "3×5/side"], ""], ["boxjump", ["4×3", "4×3", ""], ""], ["depth", ["", "", "4×3"], ""],
+    ["hclean", ["", "4×3", "4×2"], "Light and fast"], ["mbrot", ["3×5/side", "4×5/side", "3×5/side"], ""], ["flunge", ["3×5/side", "4×5/side", "4×4/side"], ""], ["sprint", ["6×10 m", "8×10 m", "6×10 m"], ""]] },
+  F: { n: "Full body + sprints", sub: "Strength circuit and repeated sprints · 50 min", warm: "lower", ex: [
+    ["fsq", ["3×8", "4×6", "3×5"], ""], ["rdl", ["3×8", "3×8", "3×6"], ""], ["pushpr", ["3×6", "4×5", "4×4"], ""], ["sled", ["4×15 m", "5×15 m", "4×15 m"], "Heavy, all-out"],
+    ["rsa", ["2 × (6× 6 s sprint / 24 s easy) · 3' between", "3 × (6× 6 s / 24 s) · 3' between", "2 × (8× 5 s / 15 s) · 3' between"], ""]] },
+  TU: { n: "Upper test", sub: "5RM bench + press, pull-ups, row 2k · 70 min", warm: "upper", test: ["bench", "ohp", "preps", "pull", "row2k"],
+    info: ["Bench and overhead press: work up to the heaviest clean set of 5 (bar×8 · 50%×5 · 70%×3 · 85%×2 · then sets of 5 adding 2.5 kg).", "Pull-ups: max strict reps. If you get more than 8, also find your 5-rep max with added weight.", "Row: 2,000 m all-out, damper 6 (always the same)."] },
+  TL: { n: "Lower test", sub: "5RM squat + deadlift, broad jump · 60 min", warm: "lower", test: ["squat", "dl", "jump"],
+    info: ["Broad jump first, fresh: best of 3, measured from the toes to the back heel.", "Squat and deadlift: work up to the heaviest clean set of 5 (bar×8 · 50%×5 · 70%×3 · 85%×2 · then sets of 5 adding 2.5-5 kg).", "Technique first: stop when a rep slows down or the form breaks."] }
+};
+const KEY_ORDER = ["U", "L", "P", "F"];
+const SHORTN = { U: "Upper", L: "Lower", P: "Power", F: "Full", TU: "Test", TL: "Test" };
+function keysOf(w) {
+  if (w === 0) return ["TL", "P", "F"];                       // Monday was the upper test
+  if (weekInfo(w).deload) return ["TL", "TU", "P", "F"];      // every 4th week: lighter + new tests
+  return KEY_ORDER;
+}
+const TF = { squat: "Squat 5RM kg", dl: "Deadlift 5RM kg", bench: "Bench 5RM kg", ohp: "Press 5RM kg", preps: "Pull-ups max reps", pull: "Pull-up +kg for 5 (optional)", row2k: "Row 2k m:ss", jump: "Broad jump cm" };
+
+const MOB = {
+  upper: { n: "Warm-up", t: "8 min", it: [["Row or ski, easy", "4 min"], ["Arm circles + band pull-aparts", "15"], ["Band external rotation", "12/side"], ["Scap push-ups", "10"], ["Empty-bar presses", "10"]] },
+  lower: { n: "Warm-up", t: "10 min", it: [["Bike or row, easy", "4 min"], ["Hip openers in lunge", "6/side"], ["Glute bridge", "12"], ["Lateral band walk", "10/side"], ["Bodyweight squats", "10"], ["Pogo jumps", "2×10"]] },
+  power: { n: "Warm-up", t: "12 min", it: [["Bike or skipping", "4 min"], ["Leg swings front + side", "10/side"], ["A-skips and high knees", "2×15 m"], ["Fencing footwork: advance-retreat", "1 min"], ["Build-up sprints", "3×10 m"]] },
+  cool:  { n: "Cool-down", t: "5 min", it: [["Easy walk", "2 min"], ["Hip flexor stretch", "30 s/side"], ["Hamstring stretch", "30 s/side"], ["Slow breathing", "1 min"]] }
+};
+
+// ═══════════════════════════════════════════
+//  ART · the Netherlands + sabre (same line and colours as the Hybrid brand)
+// ═══════════════════════════════════════════
+const ART = {
+  tulip: '<svg viewBox="0 0 60 40" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20,6 L24,14 L30,6 L36,14 L40,6 L40,18 Q30,28 20,18 Z"/><path d="M30,24 L30,38 M30,32 Q22,30 18,24 M30,34 Q38,32 42,26"/></svg>',
+  mill: '<svg viewBox="0 0 60 40" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M24,38 L27,18 L33,18 L36,38 Z"/><path d="M30,16 L14,2 M30,16 L46,2 M30,16 L16,30 M30,16 L44,30"/></svg>',
+  sabre: '<svg viewBox="0 0 60 40" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M8,36 Q30,24 52,4 M52,36 Q30,24 8,4"/><path d="M12,28 Q8,34 14,36 M48,28 Q52,34 46,36"/></svg>',
+  sky: '<svg class="sky" viewBox="0 0 360 80" fill="none" stroke="#F2F3F0" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M14,76 L14,44 L22,36 L22,30 L30,30 L30,36 L38,44 L38,76 M38,76 L38,50 L46,42 L54,50 L54,76 M54,76 L54,40 L60,34 L60,28 L68,28 L68,34 L74,40 L74,76"/><path d="M150,76 L156,46 L168,46 L174,76 M162,42 L140,20 M162,42 L184,20 M162,42 L142,62 M162,42 L182,62"/><path d="M262,72 Q300,56 340,24 M262,24 Q300,56 340,72"/><path d="M0,76 L360,76"/></svg>'
+};
+function sealSVG() {
+  return '<svg class="seal" viewBox="0 0 220 220" aria-hidden="true"><circle cx="110" cy="110" r="100" fill="none" stroke="#F2F3F0" stroke-width="2.5"/><circle cx="110" cy="110" r="89" fill="none" stroke="#C6F432" stroke-width="1"/>' +
+    '<defs><path id="sarc" d="M110,110 m-93,0 a93,93 0 1,1 186,0"/></defs><text font-family="Barlow Condensed,Inter,sans-serif" font-weight="700" font-size="15" letter-spacing="3" fill="#F2F3F0"><textPath href="#sarc" startOffset="50%" text-anchor="middle">BUITENHUIS · HYBRID</textPath></text>' +
+    '<g transform="translate(110 100) scale(.1) translate(-512 -512)"><polygon points="200,799 200,225 330,225 460,520 590,225 720,225 720,799 600,799 600,470 505,690 415,690 320,470 320,799" fill="#C6F432" stroke="#C6F432" stroke-width="10" stroke-linejoin="round"/><rect x="761" y="676" width="123" height="123" fill="#FF8A1F"/></g>' +
+    '<rect x="94" y="148" width="32" height="7" fill="#AE1C28"/><rect x="94" y="155" width="32" height="7" fill="#F2F3F0"/><rect x="94" y="162" width="32" height="7" fill="#21468B"/>' +
+    '<text x="110" y="186" text-anchor="middle" font-family="Barlow Condensed,Inter,sans-serif" font-weight="600" font-size="10" letter-spacing="3" fill="#7E847A">NEDERLAND · SABRE</text></svg>';
+}
+const FENCE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="#1B1D1F" stroke-width="2.2" stroke-linecap="round"><path d="M4,20 Q12,14 20,4"/><path d="M6,15 Q3,19 7,21"/></svg>';
+
+// ═══════════════════════════════════════════
+//  UTILITIES
+// ═══════════════════════════════════════════
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+function pad(n) { return String(n).padStart(2, "0"); }
+function ymd(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+function pd(s) { return new Date(s + "T12:00:00"); }
+function addD(s, n) { const d = pd(s); d.setDate(d.getDate() + n); return ymd(d); }
+function diff(a, b) { return Math.round((pd(a) - pd(b)) / 864e5); }
+function todayS() { return ymd(new Date()); }
+function fdate(s) { const d = pd(s); return d.getDate() + " " + MN[d.getMonth()]; }
+function dow(s) { return (pd(s).getDay() + 6) % 7; }
+function r25(x) { return Math.round(x / 2.5) * 2.5; }
+function mmss(t) { t = Math.round(t); return Math.floor(t / 60) + ":" + pad(t % 60); }
+function parseT(t) { const m = String(t).match(/^(\d{1,2}):(\d{2})(?:\.(\d))?$/); return m ? (+m[1] * 60 + +m[2] + (m[3] ? +m[3] / 10 : 0)) : null; }
+function toast(m) { const t = $("toast"); t.textContent = m; t.style.opacity = "1"; clearTimeout(t._t); t._t = setTimeout(function () { t.style.opacity = "0"; }, 2600); }
+function openModal(title, html) { $("mt").textContent = title; $("mbody").innerHTML = html; $("mbg").classList.add("on"); $("modal").classList.add("on"); }
+function closeModal() { $("mbg").classList.remove("on"); $("modal").classList.remove("on"); }
+
+// ═══════════════════════════════════════════
+//  SEASON · 3 blocks, every 4th week lighter + tests
+// ═══════════════════════════════════════════
+function weekInfo(w) { return { w: w, ph: w < 12 ? 1 : w < 24 ? 2 : 3, l: w % 4, deload: w % 4 === 3 }; }
+function posOf(ds) { const d = diff(ds, START); if (d < 0) return null; const w = Math.floor(d / 7); return w >= WEEKS ? null : weekInfo(w); }
+// Sets × reps at % of 5RM for the main lifts
+function scheme(wi) {
+  if (wi.deload) return { s: 3, r: 5, p: 0.65 };
+  const i = wi.l % 4;
+  if (wi.ph === 1) return [{ s: 4, r: 8, p: 0.8 }, { s: 4, r: 7, p: 0.85 }, { s: 4, r: 6, p: 0.9 }][i];
+  if (wi.ph === 2) return [{ s: 5, r: 5, p: 0.9 }, { s: 5, r: 4, p: 0.95 }, { s: 5, r: 3, p: 1 }][i];
+  return [{ s: 4, r: 4, p: 0.85 }, { s: 4, r: 3, p: 0.9 }, { s: 3, r: 3, p: 0.9 }][i];
+}
+function lastLog(ex, before) {
+  const ds = Object.keys(S.logs).filter(function (d) { return d < before && S.logs[d][ex] && S.logs[d][ex].kg; }).sort().pop();
+  return ds ? Object.assign({ d: ds }, S.logs[ds][ex]) : null;
+}
+function suggestKg(ex, ds) {
+  const l = lastLog(ex, ds); if (!l) return null;
+  const kg = +l.kg; if (!l.top) return { kg: kg, up: false };
+  const step = EX[ex].per ? (kg < 10 ? 1 : 2) : (kg < 20 ? 2.5 : 5);
+  return { kg: Math.round((kg + step) * 2) / 2, up: true };
+}
+function rowSplit() { const t = S.lifts.row2k ? parseT(S.lifts.row2k) : null; return t ? t / 4 : S.row500 || 136; }
+
+// ═══════════════════════════════════════════
+//  SESSIONS
+// ═══════════════════════════════════════════
+function keySession(k, wi, ds) {
+  const K = KEYS[k];
+  if (K.test) return { type: "test", key: k, t: K.n, sub: K.sub, warm: K.warm, cool: "cool", wi: wi, info: K.info, fields: K.test };
+  const ph = wi ? wi.ph : 1, sc = wi ? scheme(wi) : { s: 3, r: 8, p: 0.75 };
+  const list = [];
+  K.ex.forEach(function (e) {
+    const x = EX[e[0]];
+    if (e[1] === "MAIN" || e[1] === "MAIN2") {
+      const p = e[1] === "MAIN" ? sc.p : sc.p - 0.05, s = e[1] === "MAIN" ? sc.s : Math.max(2, sc.s - 1);
+      const base = parseFloat(S.lifts[x.rm]);
+      list.push({ ex: e[0], sr: s + "×" + sc.r, kg: base ? r25(base * p) : null, note: base ? e[2] : "Find a solid weight: test pending", main: true });
+      return;
+    }
+    let sr = e[1][ph - 1]; if (!sr) return;
+    if (wi && wi.deload && /^[345]×/.test(sr)) sr = "2" + sr.slice(1);
+    list.push({ ex: e[0], sr: sr, note: e[2] });
+  });
+  const s = { type: "gym", key: k, t: K.n, sub: K.sub, warm: K.warm, cool: "cool", wi: wi, list: list };
+  if (k === "F" && wi && wi.l % 2 === 1) s.finisher = "Option instead of the sprints: rowing 6× 250 m at " + mmss(rowSplit() - 6) + " /500 m, 1' easy between.";
+  if (wi && wi.deload) s.why = "Lighter week: fewer sets, so the tests feel fresh.";
+  return s;
+}
+function special(kind, wi) {
+  if (kind === "rest") return { type: "rest", t: "Rest day", sub: "Recovery is training too", wi: wi, info: ["No gym, no fencing.", "Walk, stretch, sleep 8 h. Hit your protein."] };
+  if (kind === "fence") return { type: "rest", t: "Fencing day", sub: "Gym is optional today", wi: wi, info: ["Your fencing session is the training today.", "If you have energy left and the week is busy, you can pick a gym session below — keep it short."] };
+  if (kind === "done") return { type: "rest", t: "Week complete", sub: "All gym sessions done", wi: wi, info: ["Great week! Rest, fence, or pick an extra session below."] };
+  return { type: "rest", t: "Recovery", sub: "Easy day", wi: wi, info: ["Easy walk or mobility.", "Want to train anyway? Pick a session below."] };
+}
+
+// ═══════════════════════════════════════════
+//  FLEXIBLE WEEK · gym on Mon/Wed mornings and Sat/Sun, fencing as scheduled
+//  A missed session moves to the next gym day. Extras allowed. Tuesday is always rest.
+//  Care: no heavy legs two days in a row, nor on Wednesday (fencing Wed evening + Thu morning).
+// ═══════════════════════════════════════════
+let _wk = {};
+function dayActs(ds) { return S.acts[ds] || []; }
+function isFenceAct(a) { return /fenc|esgrima/i.test((a.t || "") + " " + (a.n || "")); }
+function isGymAct(a) { return /WeightTraining|Crossfit|Workout|HighIntensity|Functional|Strength/i.test(a.t || ""); }
+function weekPlan(w) {
+  if (_wk[w]) return _wk[w];
+  const wi = weekInfo(w), ws = addD(START, w * 7), t = todayS(), keys = keysOf(w);
+  const done = {}, days = [];
+  let real = 0;
+  for (let d = 0; d < 7; d++) {
+    const ds = addD(ws, d), past = ds < t;
+    if (PRE[ds]) { const s = keySession(PRE[ds], wi, ds); if (S.done[ds]) real++; days.push({ ds: ds, session: s, key: PRE[ds], got: S.done[ds] ? PRE[ds] : null }); continue; }
+    const pending = keys.filter(function (k) { return !done[k]; });
+    const prev = days[d - 1], legY = prev ? LEGS[prev.key] : LEGS[S.done[addD(ds, -1)]];
+    let sug = null, why = "";
+    if (!past && pending.length && d !== REST_DOW) {
+      if (GYM_DAYS.indexOf(d) >= 0) {
+        const order = PREF[d].filter(function (k) { return pending.indexOf(k) >= 0; }).concat(pending.filter(function (k) { return PREF[d].indexOf(k) < 0; }));
+        const nonLeg = order.filter(function (k) { return !LEGS[k]; });
+        for (let i = 0; i < order.length && !sug; i++) {
+          const k = order[i];
+          if (LEGS[k] && (legY || (d === 2 && nonLeg.length))) continue;
+          sug = k;
+        }
+      } else {
+        const slotsLeft = GYM_DAYS.filter(function (x) { return x > d; }).length;
+        if (pending.length > slotsLeft) { sug = pending.filter(function (k) { return !LEGS[k]; })[0] || null; if (sug) why = "Catch-up: more sessions left than gym days this week. Keep it short, you fence today."; }
+      }
+    }
+    const pick = S.dayPick[ds];
+    let got = S.done[ds] && KEYS[S.done[ds]] ? S.done[ds] : null;
+    let want = got || (past || pick === "rest" ? null : pick || sug);
+    if (!got && !S.done[ds] && want && dayActs(ds).some(isGymAct)) { got = want; }
+    let session, extra = false;
+    if (got) {
+      if (done[got] || keys.indexOf(got) < 0) extra = true; else { done[got] = { real: true }; real++; }
+      session = keySession(got, wi, ds);
+    } else if (want) {
+      extra = !!done[want] || keys.indexOf(want) < 0;
+      session = keySession(want, wi, ds);
+      if (!extra && !past) done[want] = { projected: true };
+    } else session = special(d === REST_DOW ? "rest" : FENCE[d] !== undefined ? "fence" : pending.length ? "easy" : "done", wi);
+    if (extra) session.extra = true;
+    if (!got && why) session.why = why;
+    days.push({ ds: ds, session: session, key: want, got: got });
+  }
+  return (_wk[w] = { wi: wi, keys: keys, days: days, real: real, doneKeys: Object.keys(done).filter(function (k) { return done[k].real; }).concat(PRE[ws] && S.done[ws] ? [PRE[ws]] : []) });
+}
+function sessionFor(ds) { const wi = posOf(ds); if (!wi) return null; return weekPlan(wi.w).days[dow(ds)].session; }
+function weekOfDay(ds) { const wi = posOf(ds); return wi ? weekPlan(wi.w) : null; }
+
+// ═══════════════════════════════════════════
+//  GOOGLE SHEET (Felipe owns it; Marleen only uses the app)
+// ═══════════════════════════════════════════
+function normConn(v) { v = String(v || "").trim(); const m = v.match(/[?#&]c=([^&#\s]+)/); if (m && v.indexOf("script.google.com/macros") !== 0) { try { return decodeURIComponent(m[1]); } catch (e) {} } return v; }
+function connParts() { const raw = normConn(S.conn); if (!raw) return null; try { const u = new URL(raw); const k = u.searchParams.get("k"); u.search = ""; return k ? { url: u.toString(), k: k } : null; } catch (e) { return null; } }
+async function apiGet() { const c = connParts(); const r = await fetch(c.url + "?a=data&k=" + encodeURIComponent(c.k)); return r.json(); }
+async function apiPost(body) { const c = connParts(); if (!c) throw new Error("no connection"); const r = await fetch(c.url, { method: "POST", body: JSON.stringify(Object.assign({ k: c.k }, body)) }); return r.json(); }
+function applyData(d) {
+  if (!d || !d.ok) { if (d && d.error) toast("Sheet: " + d.error); return false; }
+  S.acts = d.acts || {}; S.polar = !!d.polar; S.sheetSync = d.lastSync || ""; S.lastSync = Date.now();
+  // backup: a fresh phone restores itself from the sheet
+  Object.keys(d.done || {}).forEach(function (ds) { if (!S.done[ds]) S.done[ds] = d.done[ds]; });
+  Object.keys(d.logs || {}).forEach(function (ds) { S.logs[ds] = S.logs[ds] || {}; Object.keys(d.logs[ds]).forEach(function (ex) { if (!S.logs[ds][ex]) S.logs[ds][ex] = d.logs[ds][ex]; }); });
+  (d.body || []).forEach(function (b) { if (b.d && !S.body.some(function (x) { return x.d === b.d; })) S.body.push({ d: b.d, kg: +b.kg }); });
+  S.body.sort(function (a, b) { return a.d < b.d ? -1 : 1; });
+  (d.tests || []).forEach(function (t) {
+    if (!t.d || S.tests.some(function (x) { return x.d === t.d; })) return;
+    S.tests.push({ d: t.d, squat: t.squat, dl: t.trap, bench: t.bench, ohp: t.ohp, pull: t.pull, preps: t.preps, row2k: t.row2k, jump: t.jump, bw: t.bw });
+  });
+  S.tests.sort(function (a, b) { return a.d < b.d ? -1 : 1; });
+  S.tests.forEach(function (t) { ["squat", "dl", "bench", "ohp", "pull", "row2k", "jump"].forEach(function (k) { if (t[k] !== undefined && t[k] !== "" && t[k] !== null) S.lifts[k] = t[k]; }); if (t.preps) S.lifts.pullreps = t.preps; });
+  if (d.settings && d.settings.dayPick && (d.settings.at || 0) > (S.setAt || 0)) S.dayPick = d.settings.dayPick;
+  _wk = {}; save(); render(); if (S.dirty || !S.pushed) schedPush(); return true;
+}
+async function refresh(manual) {
+  if (!connParts()) { if (manual) toast("Add the connection code in Settings"); return; }
+  try { if (manual) { toast("Syncing…"); if (applyData(await apiPost({ a: "sync" }))) toast("All up to date"); } else applyData(await apiGet()); }
+  catch (e) { if (manual) toast("Could not reach the sheet"); }
+}
+function touch() { S.setAt = Date.now(); }
+let _pt = null;
+function schedPush() { S.dirty = true; save(); clearTimeout(_pt); _pt = setTimeout(pushAll, 2500); }
+async function pushAll() {
+  if (!connParts()) return;
+  try {
+    const logs = [];
+    Object.keys(S.logs).forEach(function (ds) { Object.keys(S.logs[ds]).forEach(function (ex) { const l = S.logs[ds][ex]; if (l && (l.kg || l.top)) logs.push({ d: ds, ses: (sessionFor(ds) || {}).t || "", ex: EX[ex] ? EX[ex].n : ex, id: ex, kg: l.kg || "", top: !!l.top }); }); });
+    const tests = S.tests.map(function (t) { return { d: t.d, squat: t.squat, trap: t.dl, bench: t.bench, ohp: t.ohp, pull: t.pull, row2k: t.row2k, jump: t.jump, preps: t.preps, bw: t.bw }; });
+    const r = await apiPost({ a: "push", plan: { name: "Temporada sable 26/27", start: START, pre: START, race: END },
+      profile: { owner: "Marleen Buitenhuis", sub: "BUITENHUIS · Sable · Nederland · se actualiza cada día a las 6 am", kind: "gym", polar: true, protein: NUT.p, logo: SELF + "icon-512.png" },
+      days: planDays(), body: S.body, logs: logs, done: S.done, tests: tests, settings: { at: S.setAt || 0, dayPick: S.dayPick } });
+    S.dirty = !(r && r.ok); if (!S.dirty) S.pushed = String(Date.now()); save();
+  } catch (e) { S.dirty = true; save(); }
+}
+function planDays() {
+  const out = [];
+  for (let ds = START; ds <= END; ds = addD(ds, 1)) {
+    const s = sessionFor(ds); if (!s) continue; const wi = s.wi;
+    out.push({ d: ds, w: wi ? wi.w + 1 : 0, ph: wi ? PHASE[wi.ph] : "", dia: DF[dow(ds)], ses: s.t + (FENCE[dow(ds)] !== undefined ? " + esgrima" : ""),
+      loads: (s.list || []).map(function (e) { return EX[e.ex].n + " " + e.sr + (e.kg ? " · " + e.kg + " kg" : ""); }).join(" · ") });
+  }
+  return out;
+}
+function oauthGo() {
+  const c = connParts(); if (!c) { toast("Add the connection code first"); return; }
+  const st = "polarx." + btoa(encodeURIComponent(JSON.stringify({ c: c.url + "?k=" + c.k, r: SELF }))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  location.href = "https://flow.polar.com/oauth2/authorization?response_type=code&client_id=" + POLAR_ID + "&redirect_uri=" + encodeURIComponent(POLAR_RETURN) + "&state=" + st;
+}
+
+// ═══════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════
+function show(t) { tab = t; ["hoy", "plan", "tec", "aj"].forEach(function (x) { $("p-" + x).classList.toggle("on", x === t); $("n-" + x).classList.toggle("on", x === t); }); render(); }
+function render() { _wk = {}; updHeader(); if (tab === "hoy") renderHoy(); else if (tab === "plan") renderPlan(); else if (tab === "tec") renderTec(); else renderAj(); }
+function updHeader() {
+  const wi = posOf(todayS());
+  $("hr").innerHTML = "Hi, Marleen<b>" + (wi ? "W" + (wi.w + 1) + " OF " + WEEKS + " · " + PHASE[wi.ph].toUpperCase() : diff(todayS(), START) < 0 ? "SEASON STARTS 12 OCT" : "SEASON DONE") + "</b>";
+}
+function goto(ds) { viewDate = ds; show("hoy"); $("p-hoy").scrollTop = 0; }
+
+// ═══════════════════════════════════════════
+//  TODAY
+// ═══════════════════════════════════════════
+function renderHoy() {
+  const ds = viewDate, s = sessionFor(ds), d = pd(ds), dw = dow(ds);
+  let h = '<div class="datebar"><button onclick="goto(addD(viewDate,-1))">‹</button><div class="d">' + DF[dw] + " " + d.getDate() + " " + MN[d.getMonth()] +
+    "<small>" + (ds === todayS() ? "TODAY" : '<a onclick="goto(todayS())">BACK TO TODAY</a>') + '</small></div><button onclick="goto(addD(viewDate,1))">›</button></div>';
+  if (!s) { $("p-hoy").innerHTML = h + '<div class="hero"><h1>Off season</h1><p>Outside the 26/27 season.</p>' + ART.sky + "</div>"; return; }
+  const wi = s.wi;
+  h += '<div class="hero"><span class="pill l">Week ' + (wi.w + 1) + " · " + PHASE[wi.ph] + "</span>" + (wi.deload ? ' <span class="pill w">Light + tests</span>' : "") + (FENCE[dw] !== undefined ? ' <span class="pill o">Fencing ' + FENCE[dw] + "</span>" : "") +
+    "<h1>" + s.t + "</h1><p>" + s.sub + "</p>" + ART.sky + "</div>";
+  h += weekCardHTML(ds) + fenceHTML(ds) + actsHTML(ds);
+  if (s.why) h += '<div class="knee" style="margin:0 0 12px">' + esc(s.why) + "</div>";
+  if (s.extra) h += '<div class="knee" style="margin:0 0 12px">Extra session: it adds to your progress even though it was already done this week.</div>';
+  if (s.warm) h += mobHTML(s.warm);
+  if (s.info) h += '<div class="list">' + s.info.map(function (x) { return '<div class="li"><span>' + esc(x) + "</span></div>"; }).join("") + "</div>";
+  if (s.list) {
+    h += '<div class="sec">Exercises<span class="mu" style="font-family:Inter;letter-spacing:0;text-transform:none;font-size:11px">Rest 2-3\' on main lifts</span></div>';
+    s.list.forEach(function (e) { h += exHTML(e, ds); });
+  }
+  if (s.finisher) h += '<p class="sm mu" style="margin:4px 2px 12px">' + esc(s.finisher) + "</p>";
+  if (s.type === "test") h += testHTML(s, ds);
+  if (s.type === "gym" || s.type === "test") h += doneHTML(s, ds);
+  if (!PRE[ds] && ds >= todayS() && !S.done[ds]) h += '<button class="btn2" style="width:100%;margin:-4px 0 12px" onclick="choosePick(\'' + ds + '\')">' + (s.type === "rest" ? "I want to train today" : "Change session") + "</button>";
+  if (s.cool) h += mobHTML(s.cool);
+  h += bodyHTML(ds) + nutHTML(ds, s);
+  $("p-hoy").innerHTML = h;
+}
+function fenceHTML(ds) {
+  const dw = dow(ds); if (FENCE[dw] === undefined) return "";
+  const a = dayActs(ds).filter(isFenceAct)[0];
+  return '<div class="fence"><div class="ic">' + FENCE_ICON + '</div><div style="flex:1"><b>Fencing · ' + FENCE[dw] + '</b><div class="sm mu2">' + (a ? "Done · " + a.min + " min" + (a.hr ? " · ♥ " + a.hr : "") : "Recorded automatically by Polar") + "</div></div></div>";
+}
+function actsHTML(ds) {
+  const a = dayActs(ds).filter(function (x) { return !isFenceAct(x); }); if (!a.length) return "";
+  return a.map(function (x) { return '<div class="strava"><div class="ic">P</div><div style="flex:1;min-width:0"><b>Done · ' + esc(x.n || x.t) + '</b><div class="sm mu2">Polar</div></div><div class="sm mu2" style="text-align:right;white-space:nowrap">' + x.min + " min" + (x.hr ? "<br>♥ " + x.hr : "") + "</div></div>"; }).join("");
+}
+function exHTML(e, ds) {
+  const x = EX[e.ex], l = (S.logs[ds] || {})[e.ex] || {};
+  let right = "<b>" + esc(e.sr.split(" ")[0]) + "</b>", hint = esc(e.sr) + (e.note ? " · " + esc(e.note) : "");
+  if (e.main) { if (e.kg) { right = "<b>" + e.kg + "</b><small>kg</small>"; hint = esc(e.sr) + " at " + e.kg + " kg" + (e.note ? " · " + esc(e.note) : ""); } }
+  else if (x.kg) { const g = suggestKg(e.ex, ds); hint += g ? " · " + (g.up ? "go up to " + g.kg + " kg!" : "use " + g.kg + " kg") + (x.per ? " per " + x.per : "") : " · start light"; }
+  let inputs = "";
+  if (x.kg) inputs = '<div class="row" style="margin-top:10px;gap:8px" onclick="event.stopPropagation()"><input class="inp" style="width:96px;padding:8px 10px" inputmode="decimal" placeholder="' + (e.kg || "kg") + '" value="' + esc(l.kg || "") + '" onchange="setKg(\'' + ds + "','" + e.ex + '\',this.value)"><span class="sm mu">kg' + (x.per ? " per " + x.per : "") + "</span>" +
+    (e.main ? "" : '<button class="chip" style="margin-left:auto;' + (l.top ? "background:var(--lime);color:var(--limeInk)" : "") + '" onclick="toggleTop(\'' + ds + "','" + e.ex + '\')">' + (l.top ? "✓ All reps done" : "All reps done?") + "</button>") + "</div>";
+  return '<div class="ex" style="display:block" onclick="tech(\'' + e.ex + '\')"><div class="row sp"><div><div class="n">' + x.n + '</div><div class="s">' + hint + '</div></div><div class="k">' + right + "</div></div>" + inputs + "</div>";
+}
+function setKg(ds, ex, v) { const n = parseFloat(String(v).replace(",", ".")); S.logs[ds] = S.logs[ds] || {}; S.logs[ds][ex] = Object.assign({}, S.logs[ds][ex], { kg: isNaN(n) ? "" : n }); save(); schedPush(); }
+function toggleTop(ds, ex) { S.logs[ds] = S.logs[ds] || {}; const l = S.logs[ds][ex] = S.logs[ds][ex] || {}; l.top = !l.top; save(); renderHoy(); schedPush(); }
+function testHTML(s, ds) {
+  const t = S.tests.find(function (x) { return x.d === ds; }) || {};
+  return '<div class="sec">Results</div><div class="card"><div class="g2">' + s.fields.map(function (k) {
+    return '<div class="fld"><div class="lbl">' + TF[k] + '</div><input class="inp" id="tf-' + k + '" ' + (k === "row2k" ? 'placeholder="9:05"' : 'inputmode="decimal"') + ' value="' + esc(t[k] == null ? "" : t[k]) + '"></div>';
+  }).join("") + '</div><button class="btn" onclick="saveTest(\'' + ds + '\')">Save results</button>' + (t.note ? '<p class="sm mu" style="margin-top:8px">' + esc(t.note) + "</p>" : "") + "</div>";
+}
+function saveTest(ds) {
+  const s = sessionFor(ds), vals = {};
+  for (let i = 0; i < s.fields.length; i++) {
+    const k = s.fields[i], v = ($("tf-" + k).value || "").trim(); if (!v) continue;
+    if (k === "row2k") { if (!parseT(v)) { toast("Use m:ss, for example 9:05"); return; } vals[k] = v; }
+    else { const n = parseFloat(v.replace(",", ".")); if (isNaN(n)) { toast("Check " + TF[k]); return; } vals[k] = n; }
+  }
+  if (!Object.keys(vals).length) { toast("Enter at least one result"); return; }
+  let t = S.tests.find(function (x) { return x.d === ds; }); if (!t) { t = { d: ds }; S.tests.push(t); }
+  Object.keys(vals).forEach(function (k) { t[k] = vals[k]; if (k === "preps") S.lifts.pullreps = vals[k]; else S.lifts[k] = vals[k]; });
+  t.bw = S.bw; if (!S.done[ds]) S.done[ds] = s.key;
+  touch(); _wk = {}; save(); schedPush(); toast("Saved · your loads are updated"); renderHoy();
+}
+function doneHTML(s, ds) {
+  if (S.done[ds] === s.key) return '<div class="strava"><div class="ic" style="background:var(--lime);color:var(--limeInk)">✓</div><div style="flex:1"><b>Session done</b><div class="sm mu2">Nice work, Marleen. It counts for your week.</div></div><a class="sm" onclick="markDone(\'' + ds + "',null)\">Undo</a></div>";
+  return '<button class="btn" style="margin:4px 0 12px" onclick="markDone(\'' + ds + "','" + s.key + '\')">Mark session as done</button>';
+}
+function markDone(ds, k) { if (k) S.done[ds] = k; else delete S.done[ds]; touch(); save(); _wk = {}; render(); schedPush(); if (k) toast("Done! 💪"); }
+function choosePick(ds) {
+  const wp = weekOfDay(ds); if (!wp) return; const cur = S.dayPick[ds];
+  let h = '<p class="sm mu" style="margin-bottom:10px">Pick what you want to do today. The rest of the week rearranges itself.</p>';
+  wp.keys.concat(KEY_ORDER.filter(function (k) { return wp.keys.indexOf(k) < 0; })).forEach(function (k) {
+    const ex = wp.doneKeys.indexOf(k) >= 0 || wp.keys.indexOf(k) < 0;
+    h += '<button class="btn2" style="width:100%;margin-bottom:8px;text-align:left' + (cur === k ? ";outline:1.5px solid var(--lime)" : "") + '" onclick="setPick(\'' + ds + "','" + k + '\')">' + KEYS[k].n + (ex ? ' <span class="mu">· extra</span>' : "") + "</button>";
+  });
+  h += '<button class="btn2" style="width:100%;margin-bottom:8px;text-align:left" onclick="setPick(\'' + ds + '\',\'rest\')">Rest</button>';
+  if (cur) h += '<button class="btn2 r" style="width:100%" onclick="setPick(\'' + ds + '\',null)">Let the app decide</button>';
+  openModal("Choose session", h);
+}
+function setPick(ds, k) { if (k) S.dayPick[ds] = k; else delete S.dayPick[ds]; touch(); save(); closeModal(); render(); schedPush(); }
+function weekCardHTML(ds) {
+  const wp = weekOfDay(ds); if (!wp) return "";
+  const ws0 = addD(START, wp.wi.w * 7);
+  const chips = (PRE[ws0] ? [PRE[ws0]] : []).concat(wp.keys).map(function (k) { const ok = wp.doneKeys.indexOf(k) >= 0; return '<span class="pill ' + (ok ? "l" : "") + '" style="margin:0 4px 4px 0">' + (ok ? "★ " : "") + KEYS[k].n + "</span>"; }).join("");
+  const ws = addD(START, wp.wi.w * 7);
+  let fence = 0, fdone = 0; for (let d = 0; d < 7; d++) { if (FENCE[d] !== undefined) { fence++; if (dayActs(addD(ws, d)).some(isFenceAct)) fdone++; } }
+  return '<div class="card" style="padding:12px 14px"><div class="row sp"><b>This week</b><span class="sm mu">gym ' + wp.real + "/" + (wp.keys.length + (PRE[ws] ? 1 : 0)) + " · fencing " + fdone + "/" + fence + '</span></div><div style="margin-top:8px">' + chips + "</div></div>";
+}
+function mobHTML(k) { const m = MOB[k]; return '<details class="list"><summary>' + m.n + "<span>" + m.t + " ▾</span></summary>" + m.it.map(function (i) { return '<div class="li"><span>' + i[0] + "</span><b>" + i[1] + "</b></div>"; }).join("") + "</details>"; }
+function nutHTML(ds, s) {
+  const gym = s && (s.type === "gym" || s.type === "test"), fence = FENCE[dow(ds)] !== undefined;
+  const k = gym && fence ? NUT.kDouble : gym || fence ? NUT.kTrain : NUT.kRest;
+  return '<div class="sec">Food<span class="mu" style="font-family:Inter;letter-spacing:0;text-transform:none;font-size:11px">To reach 60 kg</span></div><div class="card" style="padding:12px"><div class="macros" style="grid-template-columns:1.3fr 1fr">' +
+    '<div class="mac k"><b>' + NUT.p + ' g</b><small>protein a day</small></div><div class="mac"><b>' + k.toLocaleString("en") + '</b><small>kcal approx.</small></div></div>' +
+    '<p class="sm mu" style="margin-top:10px">' + (gym && fence ? "Double day: big breakfast, and carbs + protein 2-3 h before fencing. " : fence ? "Carbs + protein 2-3 h before fencing. " : "") +
+    "Iron pills with vitamin C (orange juice), not with coffee, tea or dairy. Aim for +0.25-0.5 kg a week.</p></div>";
+}
+function bodyHTML(ds) {
+  const b = S.body.find(function (x) { return x.d === ds; });
+  if (dow(ds) !== 0 && !b) return "";
+  return '<div class="sec">Monday weigh-in<span class="mu" style="font-family:Inter;letter-spacing:0;text-transform:none;font-size:11px">Fasted</span></div><div class="card"><div class="fld"><div class="lbl">Weight kg</div><input class="inp" id="bd-kg" inputmode="decimal" placeholder="' + S.bw + '" value="' + esc(b ? b.kg : "") + '"></div>' +
+    '<button class="btn2" style="width:100%" onclick="saveBody(\'' + ds + '\')">' + (b ? "Update" : "Save") + "</button></div>";
+}
+function saveBody(ds) {
+  const kg = parseFloat(($("bd-kg").value || "").replace(",", "."));
+  if (!(kg > 30 && kg < 150)) { toast("Enter a valid weight"); return; }
+  S.body = S.body.filter(function (x) { return x.d !== ds; }); S.body.push({ d: ds, kg: kg }); S.body.sort(function (a, b) { return a.d < b.d ? -1 : 1; }); S.bw = kg;
+  touch(); save(); schedPush(); toast("Saved"); renderHoy();
+}
+function tech(k) {
+  const x = EX[k];
+  openModal(x.n, '<span class="pill l">' + x.g + '</span><ol style="margin-top:12px">' + x.c.map(function (c) { return "<li>" + esc(c) + "</li>"; }).join("") + "</ol>" + (x.k ? '<div class="knee">For sabre: ' + esc(x.k) + "</div>" : "") +
+    '<a class="btn2" style="display:block;text-align:center;margin-top:14px;text-decoration:none;color:var(--tx)" href="https://www.youtube.com/results?search_query=' + encodeURIComponent(x.n + " technique") + '" target="_blank" rel="noopener">Watch videos on YouTube</a>');
+}
+
+// ═══════════════════════════════════════════
+//  PLAN
+// ═══════════════════════════════════════════
+const BLOCKS = [["Base", "Oct – Dec", "Strength and muscle. Gain weight towards 60 kg."], ["Power", "Jan – Mar", "Jumps, starts and single-leg power on top of the strength."], ["Competition", "Apr – Jul", "Keep the strength, maximum speed, fresh for every competition."]];
+function goalsHTML() {
+  const lastB = S.body.length ? S.body[S.body.length - 1].kg : S.bw;
+  const pct = Math.max(0, Math.min(100, Math.round((lastB - 55) / (GOAL_KG - 55) * 100)));
+  const L = S.lifts;
+  return '<div class="card" style="padding:12px 14px"><div class="row sp"><b>Goals</b><span class="sm mu">season 26/27</span></div>' +
+    '<div style="margin-top:10px"><div class="row sp sm"><span>Body weight</span><span><b>' + lastB + "</b> → " + GOAL_KG + ' kg</span></div><div style="height:6px;border-radius:3px;background:var(--c2);margin-top:6px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:var(--lime)"></div></div></div>' +
+    '<div class="g2" style="margin-top:12px;gap:6px">' + [["Squat 5RM", L.squat ? L.squat + " kg" : "test"], ["Deadlift 5RM", L.dl ? L.dl + " kg" : "test"], ["Bench 5RM", L.bench ? L.bench + " kg" : "test"], ["Press 5RM", L.ohp ? L.ohp + " kg" : "test"], ["Pull-ups", (L.pullreps || "—") + " reps" + (L.pull ? " · +" + L.pull + " kg×5" : "")], ["Broad jump", L.jump ? L.jump + " cm" : "test"], ["Row 500 m", mmss(rowSplit())]]
+      .map(function (x) { return '<div class="mac" style="text-align:left;padding:8px 10px"><small>' + x[0] + '</small><b style="font-size:20px">' + x[1] + "</b></div>"; }).join("") + "</div></div>";
+}
+function renderPlan() {
+  const t = todayS();
+  let done = 0; Object.keys(S.done).forEach(function (d) { if (d <= t) done++; });
+  let fence = 0; Object.keys(S.acts).forEach(function (d) { if (d >= START && d <= t) fence += dayActs(d).filter(isFenceAct).length; });
+  let h = '<div class="count"><div class="c l"><b>' + done + '</b><span class="sm mu">gym sessions</span></div><div class="c"><b>' + fence + '</b><span class="sm mu">fencing sessions</span></div></div>';
+  h += goalsHTML();
+  const cb = posOf(t) ? posOf(t).ph - 1 : 0;
+  h += '<div class="card" style="padding:12px 14px"><div class="row sp"><b>Season 26/27</b><span class="pill o">Sabre</span></div>' + BLOCKS.map(function (b, i) { return '<div class="li" style="display:block;padding:8px 0;border-top:1px solid var(--line);' + (i === cb ? "" : "opacity:.6") + '"><b>' + (i + 1) + " · " + b[0] + '</b> <span class="mu sm">' + b[1] + (i === cb ? " · now" : "") + '</span><div class="sm mu">' + b[2] + "</div></div>"; }).join("") +
+    '<p class="sm mu" style="margin-top:8px">Competitions will be added when the calendar is known: the weeks before each one get lighter so you arrive fresh.</p></div>';
+  let lastPh = 0;
+  for (let w = 0; w < WEEKS; w++) {
+    const wi = weekInfo(w);
+    if (wi.ph !== lastPh) { lastPh = wi.ph; h += '<div class="phase" style="color:var(--lime)">' + ART[PHASE_ART[wi.ph]] + '<div class="pt"><span style="color:var(--tx)">Block ' + wi.ph + " · " + PHASE[wi.ph] + '</span><span class="pm">' + PHASE_MEAN[wi.ph] + "</span></div></div>"; }
+    h += weekHTML(addD(START, w * 7), wi, t);
+  }
+  $("p-plan").innerHTML = h;
+  const cur = document.querySelector(".wk.cur"); if (cur) cur.scrollIntoView({ block: "center" });
+}
+function shortName(s, ds) { if (!s) return "—"; if (s.key) return SHORTN[s.key]; return FENCE[dow(ds)] !== undefined ? "Fence" : dow(ds) === REST_DOW ? "Rest" : "—"; }
+function weekHTML(ws, wi, t) {
+  let days = "";
+  for (let d = 0; d < 7; d++) {
+    const ds = addD(ws, d), s = sessionFor(ds);
+    days += '<button class="day ' + (!s || s.type === "rest" ? "rest " : "") + (ds === t ? "today " : "") + (S.done[ds] ? "ok" : "") + '" onclick="goto(\'' + ds + '\')">' + DN[d] + "<small>" + shortName(s, ds) + "</small></button>";
+  }
+  const cur = t >= ws && t <= addD(ws, 6);
+  return '<div class="wk ' + (cur ? "cur" : "") + '"><div class="row sp"><b>Week ' + (wi.w + 1) + ' <span class="mu sm" style="font-weight:500">· ' + fdate(ws) + "</span></b>" + (wi.deload ? '<span class="pill w">Light + tests</span>' : "") + '</div><div class="days">' + days + "</div></div>";
+}
+
+// ═══════════════════════════════════════════
+//  TECHNIQUE
+// ═══════════════════════════════════════════
+function renderTec() {
+  const used = {}; Object.keys(KEYS).forEach(function (k) { (KEYS[k].ex || []).forEach(function (e) { used[e[0]] = 1; }); });
+  const groups = {}; Object.keys(EX).filter(function (k) { return used[k]; }).forEach(function (k) { (groups[EX[k].g] = groups[EX[k].g] || []).push(k); });
+  let h = '<div class="knee" style="margin:2px 0 14px">Every exercise explains why it matters for sabre. Pain (not effort) means stop and swap it.</div>';
+  ["Power", "Legs", "Upper", "Core", "Conditioning"].forEach(function (g) { if (!groups[g]) return; h += '<div class="sec">' + g + "</div>" + groups[g].map(function (k) { return '<div class="tq" onclick="tech(\'' + k + '\')"><span>' + EX[k].n + '</span><span class="mu">›</span></div>'; }).join(""); });
+  $("p-tec").innerHTML = h;
+}
+
+// ═══════════════════════════════════════════
+//  SETTINGS
+// ═══════════════════════════════════════════
+function renderAj() {
+  const c = connParts();
+  let h = '<div class="sec">Connection</div><div class="card">' + (c ? '<b>Connected</b><div class="sm mu">' + (S.sheetSync ? "Last sync: " + new Date(S.sheetSync).toLocaleString("en-GB") : "Not synced yet") + '</div><button class="btn" style="margin-top:12px" onclick="refresh(true)">Sync now</button>' : '<p class="sm mu">Paste the code Felipe gave you.</p>') +
+    '<div class="fld" style="margin-top:12px"><div class="lbl">Connection code</div><input class="inp" id="aj-conn" value="' + esc(S.conn) + '"></div><button class="btn2" style="width:100%" onclick="saveConn()">Save code</button></div>';
+  h += '<div class="sec">Watch</div><div class="card"><div class="row sp"><div><b>Polar</b> <span class="pill ' + (S.polar ? "l" : "") + '">' + (S.polar ? "Connected" : "Not connected") + '</span><div class="sm mu" style="margin-top:3px">Your gym and fencing sessions, sleep and recovery arrive on their own.</div></div>' + (S.polar ? "" : '<button class="btn2" onclick="oauthGo()">Connect</button>') + "</div></div>";
+  h += sealSVG() + '<p class="sm mu" style="text-align:center;letter-spacing:1px">Hybrid · Nederland</p>';
+  $("p-aj").innerHTML = h;
+}
+function saveConn() { S.conn = normConn($("aj-conn").value); save(); if (!connParts()) { toast("That code doesn't look right"); return; } toast("Connecting…"); pushAll().then(function () { refresh(false); renderAj(); }); }
+
+// ═══════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════
+(function boot() {
+  const sp = $("splash");
+  if (sp) { sp.innerHTML = sealSVG() + "<p>Hi, Marleen</p>"; setTimeout(function () { sp.classList.add("out"); setTimeout(function () { sp.remove(); }, 500); }, 1100); }
+  const q = new URLSearchParams(location.search);
+  const hm = (location.search + location.hash).match(/[?#&]c=([^&#]+)/);
+  if (hm) { try { const c = decodeURIComponent(hm[1]); if (c !== S.conn) { S.conn = c; save(); } } catch (e) {} }
+  const pol = q.get("polar");
+  if (pol) { history.replaceState(null, "", location.pathname + (hm ? "?c=" + hm[1] : "")); setTimeout(function () { toast(pol === "ok" ? "Polar connected" : "Polar could not connect. Try again in Settings."); }, 1300); }
+  render(); refresh(false); if (connParts() && (S.dirty || !S.pushed)) schedPush();
+  document.addEventListener("visibilitychange", function () { if (document.hidden) return; if (openedOn !== todayS()) { openedOn = todayS(); viewDate = todayS(); } if (Date.now() - S.lastSync > 10 * 60 * 1000) refresh(false); else render(); });
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
+})();
+
+</script>
+</body>
+</html>
