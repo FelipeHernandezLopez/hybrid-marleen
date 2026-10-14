@@ -459,10 +459,15 @@ function applyData(d) {
   if (d.settings && d.settings.dayPick && (d.settings.at || 0) > (S.setAt || 0)) S.dayPick = d.settings.dayPick;
   _wk = {}; save(); render(); if (S.dirty || !S.pushed) schedPush(); return true;
 }
+function syncBtn(txt, end) {
+  const b = document.querySelector('[onclick="refresh(true)"]'); if (!b) return;
+  b.textContent = txt; b.disabled = !end; b.style.opacity = end ? "1" : ".6";
+  if (end) setTimeout(function () { if (tab === "aj") renderAj(); }, 1800);
+}
 async function refresh(manual) {
   if (!connParts()) { if (manual) toast("Add the connection code in Settings"); return; }
-  try { if (manual) { toast("Syncing…"); if (applyData(await apiPost({ a: "sync" }))) toast("All up to date"); } else applyData(await apiGet()); }
-  catch (e) { if (manual) toast("Could not reach the sheet"); }
+  try { if (manual) { syncBtn("Syncing…"); toast("Syncing…"); if (applyData(await apiPost({ a: "sync" }))) { toast("All up to date"); syncBtn("✓ All up to date", true); } else syncBtn("Could not sync", true); } else applyData(await apiGet()); }
+  catch (e) { if (manual) { toast("Could not reach the sheet"); syncBtn("Could not sync", true); } }
 }
 function touch() { S.setAt = Date.now(); }
 let _pt = null;
