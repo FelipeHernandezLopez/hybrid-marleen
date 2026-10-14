@@ -240,7 +240,8 @@ const EX = {
   pallof:  { n: "Pallof press", g: "Core", kg: true, c: ["Side-on to the cable at chest height.", "Press the hands straight out and hold 2 s without rotating."], k: "Anti-rotation core: keeps the trunk stable while the arm cuts." },
   broad:   { n: "Broad jump", g: "Power", c: ["Feet hip-width, swing the arms.", "Jump as far as you can, land soft and hold the landing.", "Walk back and reset: every rep is maximal."], k: "Pure horizontal power: your lunge and fleche." },
   skater:  { n: "Lateral bound", g: "Power", c: ["Bound sideways from one leg to the other.", "Stick each landing for 1 s before the next."], k: "Lateral power and control for changes of direction on the piste." },
-  boxjump: { n: "Box jump", g: "Power", c: ["Mid-height box. Jump up, land soft and tall.", "Step down, never jump down."] },
+  boxjump: { n: "Box jump", g: "Power", c: ["Pick the height that makes you land in a controlled quarter squat.", "Landing almost standing, too easy? Go up 5-10 cm. Tucking the knees or landing deep? Go down.", "Explode from a short dip, land soft and quiet. Step down, never jump down.", "Already easy at your best height? Do it from a seated start on a bench, or holding 2× 4 kg dumbbells."], k: "Box height is not the goal: the jump is. A box that's too high trains tucking the knees, not power. For you probably 70-80 cm." },
+  sljump:  { n: "Single-leg box jump", g: "Power", c: ["Low box (30-40 cm). Stand on one leg.", "Jump up and land on the same leg, knee in line with the toes, hold 2 s.", "Step down. All reps on one leg, then the other."], k: "Very fencing-specific: your lunge and your recovery are single-leg power." },
   depth:   { n: "Depth jump", g: "Power", c: ["Step off a low box (30 cm).", "Touch the ground and explode up immediately: ground contact as short as possible."], k: "Reactive speed: the instant counter-attack." },
   mbrot:   { n: "Med-ball rotational throw", g: "Power", c: ["Side-on to a wall, 3-4 kg ball.", "Load the back hip, rotate and throw hard into the wall.", "Both sides."] },
   flunge:  { n: "Explosive fencing lunge + recovery", g: "Power", c: ["From guard, lunge as fast as possible (no weapon or with it).", "Recover back to guard explosively.", "Full rest between sets: speed, not fatigue."], k: "Turns gym strength into your actual fencing movement." },
@@ -263,7 +264,7 @@ const KEYS = {
     ["squat", "MAIN", ""], ["dl", "MAIN2", ""], ["bulg", ["3×8/leg", "3×6/leg", "3×5/leg"], "Both legs"],
     ["nordic", ["3×4", "3×5", "3×6"], "Slow lowering"], ["copen", ["3×15 s/side", "3×20 s/side", "3×25 s/side"], ""], ["calf", ["3×12/leg", "3×10/leg", "3×10/leg"], ""]] },
   P: { n: "Power & speed", sub: "Jumps, throws, sprints · 40 min · fresh legs", warm: "power", ex: [
-    ["broad", ["4×3", "5×3", "4×3"], "Max effort each rep"], ["skater", ["3×5/side", "4×5/side", "3×5/side"], ""], ["boxjump", ["4×3", "4×3", ""], ""], ["depth", ["", "", "4×3"], ""],
+    ["broad", ["4×3", "5×3", "4×3"], "Max effort each rep"], ["skater", ["3×5/side", "4×5/side", "3×5/side"], ""], ["boxjump", ["4×3", "4×3", ""], "Height: land in a quarter squat"], ["sljump", ["", "3×3/leg", "3×3/leg"], ""], ["depth", ["", "", "4×3"], ""],
     ["hclean", ["", "4×3", "4×2"], "Light and fast"], ["mbrot", ["3×5/side", "4×5/side", "3×5/side"], ""], ["flunge", ["3×5/side", "4×5/side", "4×4/side"], ""], ["sprint", ["6×10 m", "8×10 m", "6×10 m"], ""]] },
   F: { n: "Upper & core · light", sub: "Shoulders, core, adductors, mobility · 35 min · fencing tonight", warm: "upper", ex: [
     ["pullup", ["3×3", "3×3", "3×3"], "Easy, perfect reps"], ["dbrow", ["3×10/side", "3×10/side", "2×10/side"], "Light"], ["extrot", ["2×15/side", "3×12/side", "3×12/side"], ""],
