@@ -141,6 +141,8 @@ details.list[open] summary{border-bottom:1px solid var(--line)}
 .fence .ic{width:34px;height:34px;border-radius:10px;background:var(--or);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .fence .ic svg{width:22px;height:22px}
 .fence b{color:var(--or)}
+.btn.busy{animation:syncp 1.1s ease-in-out infinite}
+@keyframes syncp{0%,100%{opacity:.5}50%{opacity:1}}
 </style>
 </head>
 <body>
@@ -459,14 +461,19 @@ function applyData(d) {
   if (d.settings && d.settings.dayPick && (d.settings.at || 0) > (S.setAt || 0)) S.dayPick = d.settings.dayPick;
   _wk = {}; save(); render(); if (S.dirty || !S.pushed) schedPush(); return true;
 }
+let _sync = null;
 function syncBtn(txt, end) {
-  const b = document.querySelector('[onclick="refresh(true)"]'); if (!b) return;
-  b.textContent = txt; b.disabled = !end; b.style.opacity = end ? "1" : ".6";
-  if (end) setTimeout(function () { if (tab === "aj") renderAj(); }, 1800);
+  _sync = { txt: txt, end: !!end }; paintSync();
+  clearTimeout(syncBtn._t);
+  if (end) syncBtn._t = setTimeout(function () { _sync = null; if (tab === "aj") renderAj(); }, 4000);
+}
+function paintSync() {
+  const b = document.querySelector('[onclick="refresh(true)"]'); if (!b || !_sync) return;
+  b.textContent = _sync.txt; b.disabled = !_sync.end; b.classList.toggle("busy", !_sync.end);
 }
 async function refresh(manual) {
   if (!connParts()) { if (manual) toast("Add the connection code in Settings"); return; }
-  try { if (manual) { syncBtn("Syncing…"); toast("Syncing…"); if (applyData(await apiPost({ a: "sync" }))) { toast("All up to date"); syncBtn("✓ All up to date", true); } else syncBtn("Could not sync", true); } else applyData(await apiGet()); }
+  try { if (manual) { syncBtn("Syncing… this can take up to a minute"); toast("Syncing…"); if (applyData(await apiPost({ a: "sync" }))) { toast("All up to date"); syncBtn("✓ All done", true); } else syncBtn("Could not sync", true); } else applyData(await apiGet()); }
   catch (e) { if (manual) { toast("Could not reach the sheet"); syncBtn("Could not sync", true); } }
 }
 function touch() { S.setAt = Date.now(); }
@@ -604,7 +611,35 @@ function weekCardHTML(ds) {
   let fence = 0, fdone = 0; for (let d = 0; d < 7; d++) { if (FENCE[d] !== undefined) { const fd = addD(ws, d); fence += d === 3 ? 2 : 1; fdone += Math.min(d === 3 ? 2 : 1, dayActs(fd).filter(function (x) { return isFenceAct(x, fd); }).length); } }
   return '<div class="card" style="padding:12px 14px"><div class="row sp"><b>This week</b><span class="sm mu">gym ' + wp.real + "/" + (wp.keys.length + (PRE[ws] ? 1 : 0)) + " · fencing " + fdone + "/" + fence + '</span></div><div style="margin-top:8px">' + chips + "</div></div>";
 }
-function mobHTML(k) { const m = MOB[k]; return '<details class="list"><summary>' + m.n + "<span>" + m.t + " ▾</span></summary>" + m.it.map(function (i) { return '<div class="li"><span>' + i[0] + "</span><b>" + i[1] + "</b></div>"; }).join("") + "</details>"; }
+// How to do each warm-up and cool-down drill (tap the row)
+const MOBX = {
+  "Row or ski, easy": ["Easy pace, you should be able to talk.", "Row: legs, back, arms on the drive. Ski: arms long, hinge at the hips."],
+  "Bike or row, easy": ["4 minutes at an easy pace, building slightly at the end."],
+  "Bike or skipping": ["Easy bike, or light skipping with a rope.", "Raise the pace a little every minute."],
+  "Arm circles + band pull-aparts": ["Arm circles small to big, forwards and backwards.", "Then a light band in front of the chest: pull it apart squeezing the shoulder blades."],
+  "Band external rotation": ["Elbow at your side, band anchored at elbow height.", "Rotate the forearm out and back slowly. Both arms."],
+  "Scap push-ups": ["Plank with straight arms.", "Squeeze and spread the shoulder blades without bending the elbows."],
+  "Empty-bar presses": ["Empty bar, 10 easy reps of the first lift of the day.", "Groove the technique before the working sets."],
+  "Hip openers in lunge": ["Long lunge, hands inside the front foot.", "Push the front knee out, then rotate the chest up to the sky. Switch sides."],
+  "Glute bridge": ["On your back, knees bent.", "Lift the hips squeezing the glutes, pause 1 s, lower slowly."],
+  "Lateral band walk": ["Mini band above the knees, slight squat.", "Short side steps, knees never collapse inwards."],
+  "Bodyweight squats": ["Feet shoulder-width, sit down and back.", "Knees track over the toes, chest tall."],
+  "Pogo jumps": ["Small, quick jumps on the balls of the feet, knees almost straight.", "Ground contact as short as possible: wakes up the ankles."],
+  "Leg swings front + side": ["Hold a wall, swing one leg forwards and back, then side to side.", "Bigger each swing, never forced."],
+  "A-skips and high knees": ["A-skip: skip driving one knee up, the other foot pushing the ground.", "High knees: quick knees to hip height. 15 m each."],
+  "Fencing footwork: advance-retreat": ["In guard, advances and retreats, changing rhythm.", "Light feet, stay low: 1 minute."],
+  "Build-up sprints": ["10 m starting easy and finishing at about 90%.", "Walk back. 3 reps."],
+  "Easy walk": ["2 minutes of easy walking to bring the heart rate down."],
+  "Hip flexor stretch": ["Half-kneeling, squeeze the glute of the back leg.", "Move the hips slightly forward. Feel it at the front of the hip, not the lower back."],
+  "Hamstring stretch": ["Heel on a low bench, leg straight.", "Lean forward with a straight back until you feel the back of the thigh."],
+  "Slow breathing": ["On your back, inhale through the nose 4 s, exhale 6 s.", "Relax shoulders and jaw: recovery starts here."]
+};
+function mobTech(el) {
+  const n = decodeURIComponent(el.getAttribute("data-n")), c = MOBX[n]; if (!c) return;
+  openModal(n, '<ol style="margin-top:4px">' + c.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ol>" +
+    '<a class="btn2" style="display:block;text-align:center;margin-top:14px;text-decoration:none;color:var(--tx)" href="https://www.youtube.com/results?search_query=' + encodeURIComponent(n + " technique") + '" target="_blank" rel="noopener">Watch videos on YouTube</a>');
+}
+function mobHTML(k) { const m = MOB[k]; return '<details class="list"><summary>' + m.n + "<span>" + m.t + " ▾</span></summary>" + m.it.map(function (i) { const has = MOBX[i[0]]; return '<div class="li"' + (has ? ' style="cursor:pointer" data-n="' + encodeURIComponent(i[0]) + '" onclick="mobTech(this)"' : "") + "><span>" + i[0] + (has ? ' <span class="mu">›</span>' : "") + "</span><b>" + i[1] + "</b></div>"; }).join("") + '<p class="sm mu" style="padding:8px 0 10px">Tap a drill to see how to do it.</p></details>'; }
 function nutHTML(ds, s) {
   const gym = s && (s.type === "gym" || s.type === "test"), fence = FENCE[dow(ds)] !== undefined;
   const k = gym && fence ? NUT.kDouble : gym || fence ? NUT.kTrain : NUT.kRest;
@@ -693,7 +728,7 @@ function renderAj() {
     '<div class="fld" style="margin-top:12px"><div class="lbl">Connection code</div><input class="inp" id="aj-conn" value="' + esc(S.conn) + '"></div><button class="btn2" style="width:100%" onclick="saveConn()">Save code</button></div>';
   h += '<div class="sec">Watch</div><div class="card"><div class="row sp"><div><b>Polar</b> <span class="pill ' + (S.polar ? "l" : "") + '">' + (S.polar ? "Connected" : "Not connected") + '</span><div class="sm mu" style="margin-top:3px">Your gym and fencing sessions, sleep and recovery arrive on their own.</div></div>' + (S.polar ? "" : '<button class="btn2" onclick="oauthGo()">Connect</button>') + "</div></div>";
   h += sealSVG() + '<p class="sm mu" style="text-align:center;letter-spacing:1px">Hybrid · Nederland</p>';
-  $("p-aj").innerHTML = h;
+  $("p-aj").innerHTML = h; paintSync();
 }
 function saveConn() { S.conn = normConn($("aj-conn").value); save(); if (!connParts()) { toast("That code doesn't look right"); return; } toast("Connecting…"); pushAll().then(function () { refresh(false); renderAj(); }); }
 
