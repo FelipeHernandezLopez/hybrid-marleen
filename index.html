@@ -406,18 +406,20 @@ function weekPlan(w) {
     const pending = keys.filter(function (k) { return !done[k]; });
     const prev = days[d - 1], legY = prev ? LEGS[prev.key] : LEGS[S.done[addD(ds, -1)]];
     let sug = null, why = "";
-    if (!past && pending.length && (GYM_DAYS.indexOf(d) >= 0 || d === BACKUP_DOW)) {
-      const order = PREF[d].filter(function (k) { return pending.indexOf(k) >= 0; }).concat(pending.filter(function (k) { return PREF[d].indexOf(k) < 0; }));
+    const gymAct = dayActs(ds).some(isGymAct);   // Polar registró gym ese día (cuenta aunque ya pasó)
+    if ((!past || gymAct) && pending.length && (GYM_DAYS.indexOf(d) >= 0 || d === BACKUP_DOW || gymAct)) {
+      const pref = PREF[d] || ["U", "P", "F", "L", "TU", "TL"];
+      const order = pref.filter(function (k) { return pending.indexOf(k) >= 0; }).concat(pending.filter(function (k) { return pref.indexOf(k) < 0; }));
       for (let i = 0; i < order.length && !sug; i++) {
         const k = order[i];
-        if (LEGS[k] && (legY || NO_LEGS.indexOf(d) >= 0)) continue;
+        if (LEGS[k] && (legY || NO_LEGS.indexOf(d) >= 0) && !gymAct) continue;
         sug = k;
       }
       if (sug && d === BACKUP_DOW) why = "Sunday catch-up: this session is still missing this week. Skip it if you need the rest.";
     }
     const pick = S.dayPick[ds];
     let got = S.done[ds] && KEYS[S.done[ds]] ? S.done[ds] : null;
-    let want = got || (past || pick === "rest" ? null : pick || sug);
+    let want = got || (pick === "rest" ? null : past ? (gymAct ? pick || sug : null) : pick || sug);
     if (!got && !S.done[ds] && want && dayActs(ds).some(isGymAct)) { got = want; }
     let session, extra = false;
     if (got) {
@@ -528,7 +530,7 @@ function renderHoy() {
   const wi = s.wi;
   h += '<div class="hero"><span class="pill l">Week ' + (wi.w + 1) + " · " + PHASE[wi.ph] + "</span>" + (wi.deload ? ' <span class="pill w">Light + tests</span>' : "") + (FENCE[dw] !== undefined ? ' <span class="pill o">Fencing ' + FENCE[dw] + "</span>" : "") +
     "<h1>" + s.t + "</h1><p>" + s.sub + "</p>" + ART.sky + "</div>";
-  h += weekCardHTML(ds) + fenceHTML(ds) + actsHTML(ds);
+  h += coachHTML(ds) + weekCardHTML(ds) + fenceHTML(ds) + actsHTML(ds);
   if (s.why) h += '<div class="knee" style="margin:0 0 12px">' + esc(s.why) + "</div>";
   if (s.extra) h += '<div class="knee" style="margin:0 0 12px">Extra session: it adds to your progress even though it was already done this week.</div>';
   if (s.warm) h += mobHTML(s.warm);
@@ -768,7 +770,8 @@ function lineChart(series, o) {
     if (s.pts.length > 1) g += '<polyline fill="none" stroke="' + c + '" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"' + (s.dash ? ' stroke-dasharray="5 4"' : "") + ' points="' + s.pts.map(function (p) { return X(p[0]).toFixed(1) + "," + Y(p[1]).toFixed(1); }).join(" ") + '"/>';
     s.pts.forEach(function (p, i) { const last = i === s.pts.length - 1; g += '<circle cx="' + X(p[0]).toFixed(1) + '" cy="' + Y(p[1]).toFixed(1) + '" r="' + (last ? 3.6 : 2.4) + '" fill="' + c + '"/>'; });
   });
-  g += '<text x="' + L + '" y="' + (H - 6) + '" font-size="9" fill="' + CH.mu + '">' + fdate(d0) + '</text><text x="' + (W - R) + '" y="' + (H - 6) + '" text-anchor="end" font-size="9" fill="' + CH.mu + '">' + fdate(d1) + "</text>";
+  const xl = o.xfmt || fdate;
+  g += '<text x="' + L + '" y="' + (H - 6) + '" font-size="9" fill="' + CH.mu + '">' + xl(d0) + '</text><text x="' + (W - R) + '" y="' + (H - 6) + '" text-anchor="end" font-size="9" fill="' + CH.mu + '">' + xl(d1) + "</text>";
   const leg = series.length > 1 || o.legend ? '<div class="chips" style="margin-top:6px">' + series.map(function (s) { return '<span class="sm" style="color:' + (s.color || CH.lime) + '">● ' + esc(s.name) + " " + fmt(s.pts[s.pts.length - 1][1]) + "</span>"; }).join("") + "</div>" : "";
   return '<svg viewBox="0 0 ' + W + " " + H + '" style="width:100%;height:auto;max-height:230px;display:block" font-family="Inter,sans-serif">' + g + "</svg>" + leg;
 }
@@ -804,9 +807,72 @@ function weeklyAvg(pts, start) {
 // ═══════════════════════════════════════════
 //  PROGRESS · the same as the sheet's Panel, on the phone
 // ═══════════════════════════════════════════
+//  COACH · a card every day and a review every Monday, from your own data (no internet, no AI)
+// ═══════════════════════════════════════════
+function nightOf(ds) {
+  const sl = (S.sleeph || []).filter(function (r) { return r[0] <= ds && r[0] >= addD(ds, -1); }).sort(function (a, b) { return a[0] < b[0] ? -1 : 1; }).pop();
+  return sl ? { score: chNum(sl[1]), hours: chNum(sl[2]), nr: chNum(sl[3]), ans: chNum(sl[4]) } : null;
+}
+function avgOf(a) { a = a.filter(function (v) { return v != null; }); return a.length ? a.reduce(function (s, v) { return s + v; }, 0) / a.length : null; }
+function sleepAvg(from, to, i) { return avgOf((S.sleeph || []).filter(function (r) { return r[0] >= from && r[0] <= to; }).map(function (r) { return chNum(r[i]); })); }
+function n1(v) { return String(Math.round(v * 10) / 10); }
+function coachDay(ds) {
+  const s = sessionFor(ds), n = nightOf(ds), out = [], dw = dow(ds);
+  const gym = s && (s.type === "gym" || s.type === "test"), fence = FENCE[dw] !== undefined, train = gym || fence;
+  if (n && ((n.nr != null && n.nr <= 2) || (n.ans != null && n.ans <= -6))) out.push(train ? "Low recovery last night (" + (n.nr != null ? n.nr + "/6" : "ANS " + n.ans) + "): " + (gym ? "drop the gym loads by 10-15% and keep the jumps few and sharp." : "fence, but listen to your body.") : "Low recovery last night: make today a real rest day and go to bed early.");
+  else if (n && n.hours != null && n.hours < 7) out.push("You slept " + n1(n.hours) + " h: train as planned, no records today, and aim for 8 h tonight.");
+  else if (n && n.nr != null && n.nr >= 5) out.push(train ? "Great recovery (" + n.nr + "/6): a day to push. " + (s && s.key === "P" ? "Every jump and sprint at 100%." : gym ? "If the last set feels easy, tap \"All reps done\"." : "Bring the intensity to the piste.") : "Great recovery: enjoy the rest day, maybe an easy walk.");
+  else if (n) out.push(train ? "Normal recovery" + (n.nr != null ? " (" + n.nr + "/6)" : "") + ": follow the plan." : "Rest day: walk, stretch and hit your 110 g of protein.");
+  else out.push(train ? "No sleep data from last night: follow the plan and listen to your body." : "Rest day: walk, stretch and eat well.");
+  if (dw === 3) out.push("Double fencing day: big breakfast, carbs + protein between sessions, and plenty of water.");
+  else if (gym && fence) out.push("Gym this morning and fencing tonight: eat well in between (carbs + protein 2-3 h before fencing).");
+  const wi = posOf(ds);
+  if (wi) {
+    const wp = weekPlan(wi.w), pend = wp.keys.length - wp.doneKeys.filter(function (k) { return wp.keys.indexOf(k) >= 0; }).length;
+    const left = GYM_DAYS.concat([BACKUP_DOW]).filter(function (x) { return x >= dw; }).length;
+    if (pend > 0 && pend >= left && dw >= 2) out.push(pend + " gym session" + (pend > 1 ? "s" : "") + " left and " + left + " gym day" + (left > 1 ? "s" : "") + ": don't skip any.");
+  }
+  if (dw === 0) {
+    if (!S.body.some(function (b) { return b.d === ds; })) out.push("It's Monday: weigh in fasted (below).");
+    const lastV = (S.vo2h || []).map(function (p) { return p[0]; }).sort().pop();
+    if (!lastV || diff(ds, lastV) >= 12) out.push("Fitness Test day: 5 minutes lying down when you wake up, on your watch (Test → Fitness test). That's how your VO2 max updates.");
+  }
+  return out;
+}
+function coachWeek(ds) {
+  const wi = posOf(ds); if (!wi || wi.w < 1) return null;
+  const w = wi.w - 1, wp = weekPlan(w), ws = addD(START, w * 7), we = addD(ws, 6);
+  let f = 0, fp = 0, m = 0;
+  for (let d = 0; d < 7; d++) { const x = addD(ws, d); if (FENCE[d] !== undefined) fp += d === 3 ? 2 : 1; dayActs(x).forEach(function (a) { m += +a.min || 0; if (isFenceAct(a, x)) f++; }); }
+  const gymPlan = wp.keys.length + (PRE[ws] ? 1 : 0);
+  const lines = ["Gym: " + wp.real + "/" + gymPlan + " · fencing: " + f + "/" + fp + " · " + n1(m / 60) + " h of training."];
+  const s1 = sleepAvg(ws, we, 1), s0 = sleepAvg(addD(ws, -7), addD(we, -7), 1), nr1 = sleepAvg(ws, we, 3);
+  if (s1 != null) lines.push("Sleep: " + Math.round(s1) + "/100" + (s0 != null ? " (" + (s1 >= s0 ? "+" : "") + Math.round(s1 - s0) + " vs the week before)" : "") + (nr1 != null ? " · recovery " + n1(nr1) + "/6" : "") + ".");
+  const kg = S.body.filter(function (b) { return b.kg; });
+  if (kg.length) { const l = kg[kg.length - 1], p = kg.length > 1 ? kg[kg.length - 2] : null; lines.push("Weight: " + l.kg + " kg" + (p ? " (" + (l.kg - p.kg > 0 ? "+" : "") + n1(l.kg - p.kg) + ")" : "") + (l.kg < GOAL_KG ? " · " + n1(GOAL_KG - l.kg) + " kg to 60." : " · goal reached!")); }
+  let goal;
+  if (wp.real < gymPlan) goal = "all " + gymPlan + " gym sessions: strength is what keeps you fast in the last touches.";
+  else if (s1 != null && s1 < 65) goal = "better sleep: same bedtime every night, 8 h.";
+  else if (kg.length > 1 && +kg[kg.length - 1].kg <= +kg[kg.length - 2].kg) goal = "eat a bit more (+300 kcal a day): the weight is not going up yet.";
+  else goal = "repeat this week: you're on track.";
+  return { title: "Your week " + (w + 1) + " · " + fdate(ws) + " – " + fdate(we), lines: lines, goal: goal };
+}
+function coachHTML(ds) {
+  if (ds !== todayS()) return "";
+  const d = coachDay(ds), wk = dow(ds) === 0 ? coachWeek(ds) : null;
+  let h = '<div class="card" style="padding:13px 14px;border:1px solid rgba(198,244,50,.35)"><div class="lbl" style="color:var(--lime);margin-bottom:6px">Today\'s coach</div>' + d.map(function (x) { return '<p style="font-size:13.5px;margin:4px 0">' + esc(x) + "</p>"; }).join("");
+  if (wk) h += '<div class="lbl" style="color:var(--lime);margin:12px 0 6px">' + esc(wk.title) + "</div>" + wk.lines.map(function (x) { return '<p class="sm mu2" style="margin:3px 0">' + esc(x) + "</p>"; }).join("") + '<p style="font-size:13.5px;margin-top:6px"><b>Goal for the week:</b> ' + esc(wk.goal) + "</p>";
+  return h + "</div>";
+}
+function weekReviewHTML() {
+  const wk = coachWeek(todayS()); if (!wk) return "";
+  return '<div class="card" style="padding:13px 14px;border:1px solid rgba(198,244,50,.35)"><div class="lbl" style="color:var(--lime);margin-bottom:6px">' + esc(wk.title) + "</div>" + wk.lines.map(function (x) { return '<p class="sm mu2" style="margin:3px 0">' + esc(x) + "</p>"; }).join("") + '<p style="font-size:13.5px;margin-top:6px"><b>Goal for this week:</b> ' + esc(wk.goal) + "</p></div>";
+}
+
+// ═══════════════════════════════════════════
 function sgn(v, u) { v = Math.round(v * 10) / 10; return (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(v) + (u || ""); }
 function renderProg() {
-  let h = "";
+  let h = weekReviewHTML();
   const T = S.tests || [];
   const tp = function (k) { return T.filter(function (t) { return chNum(t[k]) != null; }).map(function (t) { return [t.d, +t[k]]; }); };
   // 1 · weight
@@ -840,8 +906,9 @@ function renderProg() {
   // 7 · sleep and recovery
   const sl = S.sleeph || [], first = sl.length ? sl[0][0] : todayS(), mon = addD(first, -dow(first));
   const ss = weeklyAvg(sl.map(function (r) { return [r[0], r[1]]; }), mon), nr = weeklyAvg(sl.map(function (r) { return [r[0], r[3]]; }), mon);
-  h += chartCard("Sleep · weekly average", ss.length ? Math.round(ss[ss.length - 1][1]) : "—", "Polar sleep score (0-100)", lineChart([{ name: "Sleep", color: CH.blue, pts: ss }], { fmt: function (v) { return Math.round(v); }, empty: "Appears once Polar is connected" }));
-  h += chartCard("Nightly Recharge · weekly average", nr.length ? Math.round(nr[nr.length - 1][1] * 10) / 10 : "—", "From 1 (very poor) to 6 (very good)", lineChart([{ name: "Recharge", color: CH.pink, pts: nr }], { empty: "Appears once Polar is connected" }));
+  const ln = (S.sleeph || []).filter(function (r) { return chNum(r[1]) != null; }).pop(), lr = (S.sleeph || []).filter(function (r) { return chNum(r[3]) != null; }).pop();
+  h += chartCard("Sleep", ln ? Math.round(ln[1]) : "—", (ln ? "Last night (" + fdate(ln[0]) + ")" : "") + (ss.length ? " · this week's average " + Math.round(ss[ss.length - 1][1]) : "") + " · Polar score 0-100", lineChart([{ name: "Sleep", color: CH.blue, pts: ss }], { fmt: function (v) { return Math.round(v); }, xfmt: function (d) { return "wk " + fdate(d); }, empty: "Appears once Polar is connected" }));
+  h += chartCard("Nightly Recharge", lr ? lr[3] + "/6" : "—", (lr ? "Last night (" + fdate(lr[0]) + ")" : "") + (nr.length ? " · this week's average " + Math.round(nr[nr.length - 1][1] * 10) / 10 : "") + " · 1 = very poor · 6 = very good", lineChart([{ name: "Recharge", color: CH.pink, pts: nr }], { xfmt: function (d) { return "wk " + fdate(d); }, empty: "Appears once Polar is connected" }));
   $("p-prog").innerHTML = h;
 }
 
