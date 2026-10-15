@@ -555,10 +555,16 @@ function actsHTML(ds) {
   const a = dayActs(ds).filter(function (x) { return !isFenceAct(x, ds); }); if (!a.length) return "";
   return a.map(function (x) { return '<div class="strava"><div class="ic">P</div><div style="flex:1;min-width:0"><b>Done · ' + esc(x.n || x.t) + '</b><div class="sm mu2">Polar</div></div><div class="sm mu2" style="text-align:right;white-space:nowrap">' + x.min + " min" + (x.hr ? "<br>♥ " + x.hr : "") + "</div></div>"; }).join("");
 }
+// "4×8" → "4 sets × 8 reps": always sets first, then reps
+function fmtSR(sr) {
+  const m = String(sr || "").match(/^(\d+)×(.+)$/); if (!m) return String(sr || "");
+  const r = m[2], reps = /^\d+(-\d+)?(\/.+)?$/.test(r);
+  return m[1] + (m[1] === "1" ? " set" : " sets") + " × " + (reps ? r.replace(/^(\d+(?:-\d+)?)/, "$1 reps") : r);
+}
 function exHTML(e, ds) {
   const x = EX[e.ex], l = (S.logs[ds] || {})[e.ex] || {};
-  let right = "<b>" + esc(e.sr.split(" ")[0]) + "</b>", hint = esc(e.sr) + (e.note ? " · " + esc(e.note) : "");
-  if (e.main) { if (e.kg) { right = "<b>" + e.kg + "</b><small>kg</small>"; hint = esc(e.sr) + " at " + e.kg + " kg" + (e.note ? " · " + esc(e.note) : ""); } }
+  let right = "<b>" + esc(e.sr.split(" ")[0]) + "</b>", hint = esc(fmtSR(e.sr)) + (e.note ? " · " + esc(e.note) : "");
+  if (e.main) { if (e.kg) { right = "<b>" + e.kg + "</b><small>kg</small>"; hint = esc(fmtSR(e.sr)) + " at " + e.kg + " kg" + (e.note ? " · " + esc(e.note) : ""); } }
   else if (x.kg) { const g = suggestKg(e.ex, ds); hint += g ? " · " + (g.up ? "go up to " + g.kg + " kg!" : "use " + g.kg + " kg") + (x.per ? " per " + x.per : "") : " · start light"; }
   let inputs = "";
   if (x.kg) inputs = '<div class="row" style="margin-top:10px;gap:8px" onclick="event.stopPropagation()"><input class="inp" style="width:96px;padding:8px 10px" inputmode="decimal" placeholder="' + (e.kg || "kg") + '" value="' + esc(l.kg || "") + '" onchange="setKg(\'' + ds + "','" + e.ex + '\',this.value)"><span class="sm mu">kg' + (x.per ? " per " + x.per : "") + "</span>" +
