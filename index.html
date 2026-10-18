@@ -204,7 +204,7 @@ const LEGS = { L: 1, TL: 1 };
 const NUT = { p: 110, kRest: 2300, kTrain: 2700, kDouble: 3000 };
 const GOAL_KG = 60;
 
-const DEF = { bw: 55, logs: {}, done: { "2026-10-12": "TU" }, body: [], acts: {}, dayPick: {},
+const DEF = { bw: 55, logs: {}, done: { "2026-10-12": "TU" }, body: [], acts: {}, dayPick: {}, actMap: {}, fenceMark: {},
   lifts: { bench: 35, ohp: 30, pullreps: 5 }, row500: 136,
   tests: [{ d: "2026-10-12", bench: 35, ohp: 30, preps: 5, bw: 55, note: "Row: 1780 m in 8:05 (damper 6)" }],
   conn: "", polar: false, sheetSync: "", lastSync: 0, setAt: 0, dirty: false, pushed: "" };
@@ -217,7 +217,7 @@ function load() {
     const p = JSON.parse(localStorage.getItem(LS) || "null");
     if (!p) return JSON.parse(JSON.stringify(DEF));
     const o = Object.assign({}, JSON.parse(JSON.stringify(DEF)), p);
-    ["logs", "done", "acts", "dayPick", "lifts"].forEach(function (k) { o[k] = o[k] || {}; });
+    ["logs", "done", "acts", "dayPick", "lifts", "actMap", "fenceMark"].forEach(function (k) { o[k] = o[k] || {}; });
     o.body = o.body || []; o.tests = o.tests || []; return o;
   } catch (e) { return JSON.parse(JSON.stringify(DEF)); }
 }
@@ -393,8 +393,21 @@ function special(kind, wi) {
 // ═══════════════════════════════════════════
 let _wk = {};
 function dayActs(ds) { return S.acts[ds] || []; }
-function isFenceAct(a, ds) { return /fenc|esgrima/i.test((a.t || "") + " " + (a.n || "")) || (ds && FENCE[dow(ds)] !== undefined && !isGymAct(a) && !/Walk|Hike/.test(a.t || "")); }
-function isGymAct(a) { return /WeightTraining|Crossfit|Workout|HighIntensity|Functional|Strength/i.test(a.t || ""); }
+// What a Polar activity was: Marleen can set it with "Change"; otherwise the app decides.
+// On a fencing day, a long session (90+ min) or any non-gym sport is fencing, whatever profile the watch used.
+function actKindM(a, ds) {
+  const m = S.actMap[a.id];
+  if (m === "fence" || m === "extra") return m;
+  if (m && KEYS[m]) return "gym";
+  const gymType = /WeightTraining|Crossfit|Workout|HighIntensity|Functional|Strength/i.test(a.t || "");
+  if (/fenc|esgrima/i.test((a.t || "") + " " + (a.n || ""))) return "fence";
+  if (/Walk|Hike/.test(a.t || "")) return "extra";
+  if (ds && FENCE[dow(ds)] !== undefined && (!gymType || (+a.min || 0) >= 90)) return "fence";
+  return gymType ? "gym" : "extra";
+}
+function isFenceAct(a, ds) { return actKindM(a, ds) === "fence"; }
+function isGymAct(a, ds) { return actKindM(a, ds) === "gym"; }
+function fenceN(ds) { return dayActs(ds).filter(function (x) { return isFenceAct(x, ds); }).length + (S.fenceMark[ds] ? 1 : 0); }
 function weekPlan(w) {
   if (_wk[w]) return _wk[w];
   const wi = weekInfo(w), ws = addD(START, w * 7), t = todayS(), keys = keysOf(w);
@@ -406,7 +419,7 @@ function weekPlan(w) {
     const pending = keys.filter(function (k) { return !done[k]; });
     const prev = days[d - 1], legY = prev ? LEGS[prev.key] : LEGS[S.done[addD(ds, -1)]];
     let sug = null, why = "";
-    const gymAct = dayActs(ds).some(isGymAct);   // Polar registró gym ese día (cuenta aunque ya pasó)
+    const gymAct = dayActs(ds).some(function (a) { return isGymAct(a, ds); });   // Polar registró gym ese día (cuenta aunque ya pasó)
     if ((!past || gymAct) && pending.length && (GYM_DAYS.indexOf(d) >= 0 || d === BACKUP_DOW || gymAct)) {
       const pref = PREF[d] || ["U", "P", "F", "L", "TU", "TL"];
       const order = pref.filter(function (k) { return pending.indexOf(k) >= 0; }).concat(pending.filter(function (k) { return pref.indexOf(k) < 0; }));
@@ -420,7 +433,9 @@ function weekPlan(w) {
     const pick = S.dayPick[ds];
     let got = S.done[ds] && KEYS[S.done[ds]] ? S.done[ds] : null;
     let want = got || (pick === "rest" ? null : past ? (gymAct ? pick || sug : null) : pick || sug);
-    if (!got && !S.done[ds] && want && dayActs(ds).some(isGymAct)) { got = want; }
+    const mk = dayActs(ds).map(function (a) { return S.actMap[a.id]; }).filter(function (k) { return k && KEYS[k]; })[0];
+    if (!got && mk) { got = mk; want = mk; }
+    if (!got && !S.done[ds] && want && gymAct) { got = want; }
     let session, extra = false;
     if (got) {
       if (done[got] || keys.indexOf(got) < 0) extra = true; else { done[got] = { real: true }; real++; }
@@ -460,7 +475,7 @@ function applyData(d) {
   });
   S.tests.sort(function (a, b) { return a.d < b.d ? -1 : 1; });
   S.tests.forEach(function (t) { ["squat", "dl", "bench", "ohp", "pull", "row2k", "jump"].forEach(function (k) { if (t[k] !== undefined && t[k] !== "" && t[k] !== null) S.lifts[k] = t[k]; }); if (t.preps) S.lifts.pullreps = t.preps; });
-  if (d.settings && d.settings.dayPick && (d.settings.at || 0) > (S.setAt || 0)) S.dayPick = d.settings.dayPick;
+  if (d.settings && (d.settings.at || 0) > (S.setAt || 0)) { if (d.settings.dayPick) S.dayPick = d.settings.dayPick; if (d.settings.actMap) S.actMap = d.settings.actMap; if (d.settings.fenceMark) S.fenceMark = d.settings.fenceMark; }
   _wk = {}; save(); render(); if (S.dirty || !S.pushed) schedPush(); return true;
 }
 let _sync = null;
@@ -489,7 +504,7 @@ async function pushAll() {
     const tests = S.tests.map(function (t) { return { d: t.d, squat: t.squat, trap: t.dl, bench: t.bench, ohp: t.ohp, pull: t.pull, row2k: t.row2k, jump: t.jump, preps: t.preps, bw: t.bw }; });
     const r = await apiPost({ a: "push", plan: { name: "Temporada sable 26/27", start: START, pre: START, race: END },
       profile: { owner: "Marleen Buitenhuis", sub: "BUITENHUIS · Sable · Nederland · se actualiza cada día a las 6 am", kind: "gym", polar: true, protein: NUT.p, logo: SELF + "icon-512.png" },
-      days: planDays(), body: S.body, logs: logs, done: S.done, tests: tests, settings: { at: S.setAt || 0, dayPick: S.dayPick } });
+      days: planDays(), body: S.body, logs: logs, done: S.done, tests: tests, settings: { at: S.setAt || 0, dayPick: S.dayPick, actMap: S.actMap, fenceMark: S.fenceMark } });
     S.dirty = !(r && r.ok); if (!S.dirty) S.pushed = String(Date.now()); save();
   } catch (e) { S.dirty = true; save(); }
 }
@@ -548,15 +563,34 @@ function renderHoy() {
   $("p-hoy").innerHTML = h;
 }
 function fenceHTML(ds) {
-  const dw = dow(ds); if (FENCE[dw] === undefined) return "";
+  const dw = dow(ds); if (FENCE[dw] === undefined && !S.fenceMark[ds] && !dayActs(ds).some(function (x) { return isFenceAct(x, ds); })) return "";
   const a = dayActs(ds).filter(function (x) { return isFenceAct(x, ds); });
-  const min = a.reduce(function (m, x) { return m + (+x.min || 0); }, 0);
-  return '<div class="fence"><div class="ic">' + FENCE_ICON + '</div><div style="flex:1"><b>Fencing · ' + FENCE[dw] + '</b><div class="sm mu2">' + (a.length ? "Done · " + (a.length > 1 ? a.length + " sessions · " : "") + min + " min" : "Recorded automatically by Polar: start a Fencing session on your watch") + "</div></div></div>";
+  const min = a.reduce(function (m, x) { return m + (+x.min || 0); }, 0), n = a.length + (S.fenceMark[ds] ? 1 : 0);
+  const txt = n ? "Done · " + (n > 1 ? n + " sessions" : "1 session") + (min ? " · " + min + " min" : "") + (S.fenceMark[ds] ? " · marked by you" : "") : "Recorded by Polar. Didn't wear the watch? Mark it below.";
+  const btn = ds <= todayS() ? (S.fenceMark[ds] ? '<a class="sm" onclick="markFence(\'' + ds + '\',false)">Undo</a>' : '<a class="sm" style="font-weight:600" onclick="markFence(\'' + ds + '\',true)">I fenced today</a>') : "";
+  return '<div class="fence"><div class="ic">' + FENCE_ICON + '</div><div style="flex:1"><b>Fencing' + (FENCE[dw] !== undefined ? " · " + FENCE[dw] : "") + '</b><div class="sm mu2">' + txt + "</div></div>" + btn + "</div>";
 }
+function markFence(ds, on) { if (on) S.fenceMark[ds] = true; else delete S.fenceMark[ds]; touch(); save(); _wk = {}; render(); schedPush(); if (on) toast("Fencing counted"); }
 function actsHTML(ds) {
-  const a = dayActs(ds).filter(function (x) { return !isFenceAct(x, ds); }); if (!a.length) return "";
-  return a.map(function (x) { return '<div class="strava"><div class="ic">P</div><div style="flex:1;min-width:0"><b>Done · ' + esc(x.n || x.t) + '</b><div class="sm mu2">Polar</div></div><div class="sm mu2" style="text-align:right;white-space:nowrap">' + x.min + " min" + (x.hr ? "<br>♥ " + x.hr : "") + "</div></div>"; }).join("");
+  const a = dayActs(ds); if (!a.length) return "";
+  const wp = weekOfDay(ds), day = wp ? wp.days[dow(ds)] : null;
+  return a.map(function (x) {
+    const k = actKindM(x, ds), m = S.actMap[x.id];
+    const tag = k === "fence" ? "Counts as fencing" : k === "gym" ? "Counts as " + (m && KEYS[m] ? KEYS[m].n : day && day.got ? KEYS[day.got].n : "gym") : "Extra · adds to your week";
+    return '<div class="strava"><div class="ic">P</div><div style="flex:1;min-width:0"><b>Done · ' + esc(x.n || x.t) + '</b><div class="sm mu2">' + esc(tag) + "</div>" + (x.id ? '<a class="sm" style="font-weight:600" onclick="changeAct(\'' + esc(x.id) + "','" + ds + '\')">Change</a>' : "") + "</div>" +
+      '<div class="sm mu2" style="text-align:right;white-space:nowrap">' + x.min + " min" + (x.hr ? "<br>♥ " + x.hr : "") + "</div></div>";
+  }).join("");
 }
+function changeAct(id, ds) {
+  const wp = weekOfDay(ds), cur = S.actMap[id];
+  const opt = function (k, label) { return '<button class="btn2" style="width:100%;margin-bottom:8px;text-align:left' + (cur === k ? ";outline:1.5px solid var(--lime)" : "") + '" onclick="setAct(\'' + id + "','" + k + '\')">' + label + "</button>"; };
+  let h = '<p class="sm mu" style="margin-bottom:10px">What was this activity? The rest of the week rearranges itself.</p>' + opt("fence", "Fencing");
+  (wp ? wp.keys.concat(KEY_ORDER.filter(function (k) { return wp.keys.indexOf(k) < 0; })) : KEY_ORDER).forEach(function (k) { h += opt(k, "Gym · " + KEYS[k].n); });
+  h += opt("extra", "Extra (other sport)");
+  if (cur) h += '<button class="btn2 r" style="width:100%" onclick="setAct(\'' + id + '\',null)">Let the app decide</button>';
+  openModal("Change activity", h);
+}
+function setAct(id, k) { if (k) S.actMap[id] = k; else delete S.actMap[id]; touch(); save(); closeModal(); _wk = {}; render(); schedPush(); }
 // "4×8" → "4 sets × 8 reps": always sets first, then reps
 function fmtSR(sr) {
   const m = String(sr || "").match(/^(\d+)×(.+)$/); if (!m) return String(sr || "");
@@ -616,7 +650,7 @@ function weekCardHTML(ds) {
   const ws0 = addD(START, wp.wi.w * 7);
   const chips = (PRE[ws0] ? [PRE[ws0]] : []).concat(wp.keys).map(function (k) { const ok = wp.doneKeys.indexOf(k) >= 0; return '<span class="pill ' + (ok ? "l" : "") + '" style="margin:0 4px 4px 0">' + (ok ? "★ " : "") + KEYS[k].n + "</span>"; }).join("");
   const ws = addD(START, wp.wi.w * 7);
-  let fence = 0, fdone = 0; for (let d = 0; d < 7; d++) { if (FENCE[d] !== undefined) { const fd = addD(ws, d); fence += d === 3 ? 2 : 1; fdone += Math.min(d === 3 ? 2 : 1, dayActs(fd).filter(function (x) { return isFenceAct(x, fd); }).length); } }
+  let fence = 0, fdone = 0; for (let d = 0; d < 7; d++) { if (FENCE[d] !== undefined) { const fd = addD(ws, d); fence += d === 3 ? 2 : 1; fdone += Math.min(d === 3 ? 2 : 1, fenceN(fd)); } }
   return '<div class="card" style="padding:12px 14px"><div class="row sp"><b>This week</b><span class="sm mu">gym ' + wp.real + "/" + (wp.keys.length + (PRE[ws] ? 1 : 0)) + " · fencing " + fdone + "/" + fence + '</span></div><div style="margin-top:8px">' + chips + "</div></div>";
 }
 // How to do each warm-up and cool-down drill (tap the row)
@@ -690,7 +724,8 @@ function goalsHTML() {
 function renderPlan() {
   const t = todayS();
   let done = 0; Object.keys(S.done).forEach(function (d) { if (d <= t) done++; });
-  let fence = 0; Object.keys(S.acts).forEach(function (d) { if (d >= START && d <= t) fence += dayActs(d).filter(function (x) { return isFenceAct(x, d); }).length; });
+  let fence = 0; Object.keys(S.acts).forEach(function (d) { if (d >= START && d <= t) fence += fenceN(d); });
+  Object.keys(S.fenceMark).forEach(function (d) { if (d >= START && d <= t && !S.acts[d]) fence++; });
   let h = '<div class="count"><div class="c l"><b>' + done + '</b><span class="sm mu">gym sessions</span></div><div class="c"><b>' + fence + '</b><span class="sm mu">fencing sessions</span></div></div>';
   h += goalsHTML();
   const cb = posOf(t) ? posOf(t).ph - 1 : 0;
@@ -843,7 +878,7 @@ function coachWeek(ds) {
   const wi = posOf(ds); if (!wi || wi.w < 1) return null;
   const w = wi.w - 1, wp = weekPlan(w), ws = addD(START, w * 7), we = addD(ws, 6);
   let f = 0, fp = 0, m = 0;
-  for (let d = 0; d < 7; d++) { const x = addD(ws, d); if (FENCE[d] !== undefined) fp += d === 3 ? 2 : 1; dayActs(x).forEach(function (a) { m += +a.min || 0; if (isFenceAct(a, x)) f++; }); }
+  for (let d = 0; d < 7; d++) { const x = addD(ws, d); if (FENCE[d] !== undefined) fp += d === 3 ? 2 : 1; dayActs(x).forEach(function (a) { m += +a.min || 0; }); f += fenceN(x); }
   const gymPlan = wp.keys.length + (PRE[ws] ? 1 : 0);
   const lines = ["Gym: " + wp.real + "/" + gymPlan + " · fencing: " + f + "/" + fp + " · " + n1(m / 60) + " h of training."];
   const s1 = sleepAvg(ws, we, 1), s0 = sleepAvg(addD(ws, -7), addD(we, -7), 1), nr1 = sleepAvg(ws, we, 3);
@@ -894,7 +929,7 @@ function renderProg() {
   const cw = posOf(todayS()), bars = [], mins = [];
   for (let w = 0; cw && w <= cw.w; w++) {
     const wp = weekPlan(w), ws = addD(START, w * 7); let f = 0, m = 0;
-    for (let d = 0; d < 7; d++) { const ds = addD(ws, d); dayActs(ds).forEach(function (a) { m += +a.min || 0; if (isFenceAct(a, ds)) f++; }); }
+    for (let d = 0; d < 7; d++) { const ds = addD(ws, d); dayActs(ds).forEach(function (a) { m += +a.min || 0; }); f += fenceN(ds); }
     bars.push({ label: "W" + (w + 1), a: wp.real, b: f }); mins.push({ label: "W" + (w + 1), a: m });
   }
   const lb = bars[bars.length - 1], lm = mins[mins.length - 1];
