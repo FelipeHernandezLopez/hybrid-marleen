@@ -552,7 +552,9 @@ function renderHoy() {
   if (s.info) h += '<div class="list">' + s.info.map(function (x) { return '<div class="li"><span>' + esc(x) + "</span></div>"; }).join("") + "</div>";
   if (s.list) {
     h += '<div class="sec">Exercises<span class="mu" style="font-family:Inter;letter-spacing:0;text-transform:none;font-size:11px">Rest 2-3\' on main lifts</span></div>';
-    s.list.forEach(function (e) { h += exHTML(e, ds); });
+    const sh = S.shortS && S.shortS[ds] && s.type === "gym";
+    (sh ? s.list.slice(0, 4) : s.list).forEach(function (e) { h += exHTML(e, ds); });
+    if (s.type === "gym" && s.list.length > 4) h += '<div class="chips" style="margin:2px 0 12px"><button class="chip" style="' + (sh ? "background:var(--lime);color:var(--limeInk)" : "") + '" onclick="toggleShortS(\'' + ds + '\')">' + (sh ? "✓ Short version: first 4 exercises" : "Short on time? 30-min version") + "</button></div>";
   }
   if (s.finisher) h += '<p class="sm mu" style="margin:4px 2px 12px">' + esc(s.finisher) + "</p>";
   if (s.type === "test") h += testHTML(s, ds);
@@ -632,6 +634,7 @@ function doneHTML(s, ds) {
   if (S.done[ds] === s.key) return '<div class="strava"><div class="ic" style="background:var(--lime);color:var(--limeInk)">✓</div><div style="flex:1"><b>Session done</b><div class="sm mu2">Nice work, Marleen. It counts for your week.</div></div><a class="sm" onclick="markDone(\'' + ds + "',null)\">Undo</a></div>";
   return '<button class="btn" style="margin:4px 0 12px" onclick="markDone(\'' + ds + "','" + s.key + '\')">Mark session as done</button>';
 }
+function toggleShortS(ds) { S.shortS = S.shortS || {}; if (S.shortS[ds]) delete S.shortS[ds]; else S.shortS[ds] = true; touch(); save(); renderHoy(); }
 function markDone(ds, k) { if (k) S.done[ds] = k; else delete S.done[ds]; touch(); save(); _wk = {}; render(); schedPush(); if (k) toast("Done! 💪"); }
 function choosePick(ds) {
   const wp = weekOfDay(ds); if (!wp) return; const cur = S.dayPick[ds];
