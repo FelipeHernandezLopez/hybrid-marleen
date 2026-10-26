@@ -347,10 +347,32 @@ function lastLog(ex, before) {
   const ds = Object.keys(S.logs).filter(function (d) { return d < before && S.logs[d][ex] && S.logs[d][ex].kg; }).sort().pop();
   return ds ? Object.assign({ d: ds }, S.logs[ds][ex]) : null;
 }
+// Alternatives when the machine is busy or the equipment is missing (↔ Swap)
+const SUBS = {
+  bulg: ["Reverse lunge with dumbbells", "Step-up"], nordic: ["Machine leg curl", "Stability-ball leg curl"], copen: ["Side-lying adductor raise", "Adductor machine"],
+  calf: ["Calf raise on the leg press", "Seated calf machine"], pullup: ["Lat pulldown", "Inverted row"], dbrow: ["Seated cable row", "Chest-supported row machine"],
+  extrot: ["Band external rotation", "Side-lying dumbbell external rotation"], pallof: ["Band Pallof press", "Side plank with reach-through"],
+  broad: ["Standing triple jump", "Box jump"], skater: ["Lateral hurdle hops", "Lateral box step-up, explosive"], boxjump: ["Tuck jumps", "Broad jump"],
+  sljump: ["Single-leg broad jump", "Single-leg hop and stick"], depth: ["Pogo jumps", "Hurdle hops"], mbrot: ["Cable woodchop, fast", "Band rotation throw"],
+  flunge: ["Split-squat jumps", "Lunge with a fast recovery, no weapon"], sprint: ["Curved treadmill 10 s sprint", "Bike 8 s sprint"], hclean: ["Dumbbell hang power clean", "Kettlebell swing"]
+};
+function subOf(ds, ex) { return ((S.logs[ds] || {}).subs || {})[ex] || ""; }
+function swapEx(ds, ex) {
+  const cur = subOf(ds, ex), opt = function (v, lbl, on) { return '<button class="btn2" style="width:100%;margin-bottom:8px;text-align:left' + (on ? ";outline:1.5px solid var(--lime)" : "") + '" onclick="setSub(\'' + ds + "','" + ex + "'," + (v == null ? "null" : "'" + encodeURIComponent(v) + "'") + ')">' + esc(lbl) + "</button>"; };
+  openModal("Swap exercise", '<p class="sm mu" style="margin-bottom:10px">' + esc(EX[ex].n) + " → today I do:</p>" + SUBS[ex].map(function (a) { return opt(a, a, cur === a); }).join("") + (cur ? opt(null, "Back to the original: " + EX[ex].n, false) : ""));
+}
+function setSub(ds, ex, v) { S.logs[ds] = S.logs[ds] || {}; S.logs[ds].subs = S.logs[ds].subs || {}; if (v) S.logs[ds].subs[ex] = decodeURIComponent(v); else delete S.logs[ds].subs[ex]; touch(); save(); closeModal(); renderHoy(); schedPush(); }
+function fails2(ex, before) {
+  const ls = Object.keys(S.logs).filter(function (d) { return d < before && S.logs[d][ex] && S.logs[d][ex].kg; }).sort().slice(-2);
+  return ls.length === 2 && ls.every(function (d) { return S.logs[d][ex].fail; });
+}
+function setReps(ds, ex, v) { S.logs[ds] = S.logs[ds] || {}; S.logs[ds][ex] = Object.assign({}, S.logs[ds][ex], { reps: String(v || "").trim() }); save(); schedPush(); }
 function suggestKg(ex, ds) {
   const l = lastLog(ex, ds); if (!l) return null;
-  const kg = +l.kg; if (!l.top) return { kg: kg, up: false };
-  const step = EX[ex].per ? (kg < 10 ? 1 : 2) : (kg < 20 ? 2.5 : 5);
+  const kg = +l.kg, per = (EX[ex.replace(/_alt$/, "")] || {}).per && ex.indexOf("_alt") < 0;
+  if (fails2(ex, ds)) return { kg: per ? Math.max(1, Math.min(kg - 1, Math.round(kg * 0.95))) : Math.max(2.5, Math.min(kg - 2.5, Math.round(kg * 0.95 / 2.5) * 2.5)), up: false, down: true };
+  if (!l.top) return { kg: kg, up: false };
+  const step = per ? (kg < 10 ? 1 : 2) : (kg < 20 ? 2.5 : 5);
   return { kg: Math.round((kg + step) * 2) / 2, up: true };
 }
 function rowSplit() { const t = S.lifts.row2k ? parseT(S.lifts.row2k) : null; return t ? t / 4 : S.row500 || 136; }
@@ -500,7 +522,8 @@ async function pushAll() {
   if (!connParts()) return;
   try {
     const logs = [];
-    Object.keys(S.logs).forEach(function (ds) { Object.keys(S.logs[ds]).forEach(function (ex) { const l = S.logs[ds][ex]; if (l && (l.kg || l.top)) logs.push({ d: ds, ses: (sessionFor(ds) || {}).t || "", ex: EX[ex] ? EX[ex].n : ex, id: ex, kg: l.kg || "", top: !!l.top }); }); });
+    Object.keys(S.logs).forEach(function (ds) { Object.keys(S.logs[ds]).forEach(function (ex) { const l = S.logs[ds][ex]; if (ex === "subs") return; const base = ex.replace(/_alt$/, ""), nm = ex !== base ? (subOf(ds, base) || "Alt") + " (instead of " + (EX[base] ? EX[base].n : base) + ")" : EX[ex] ? EX[ex].n : ex;
+      if (l && (l.kg || l.top || l.fail)) logs.push({ d: ds, ses: (sessionFor(ds) || {}).t || "", ex: nm + (l.fail ? " · not completed" + (l.reps ? " (" + l.reps + ")" : "") : ""), id: ex, kg: l.kg || "", top: !!l.top }); }); });
     const tests = S.tests.map(function (t) { return { d: t.d, squat: t.squat, trap: t.dl, bench: t.bench, ohp: t.ohp, pull: t.pull, row2k: t.row2k, jump: t.jump, preps: t.preps, bw: t.bw }; });
     const r = await apiPost({ a: "push", plan: { name: "Temporada sable 26/27", start: START, pre: START, race: END },
       profile: { owner: "Marleen Buitenhuis", sub: "BUITENHUIS · Sable · Nederland · se actualiza cada día a las 6 am", kind: "gym", polar: true, protein: NUT.p, logo: SELF + "icon-512.png" },
@@ -600,17 +623,25 @@ function fmtSR(sr) {
   return m[1] + (m[1] === "1" ? " set" : " sets") + " × " + (reps ? r.replace(/^(\d+(?:-\d+)?)/, "$1 reps") : r);
 }
 function exHTML(e, ds) {
-  const x = EX[e.ex], l = (S.logs[ds] || {})[e.ex] || {};
+  const x = EX[e.ex], sub = subOf(ds, e.ex), id = sub ? e.ex + "_alt" : e.ex, l = (S.logs[ds] || {})[id] || {}, g = suggestKg(id, ds);
+  const per = x.per && !sub ? " per " + x.per : "";
   let right = "<b>" + esc(e.sr.split(" ")[0]) + "</b>", hint = esc(fmtSR(e.sr)) + (e.note ? " · " + esc(e.note) : "");
-  if (e.main) { if (e.kg) { right = "<b>" + e.kg + "</b><small>kg</small>"; hint = esc(fmtSR(e.sr)) + " at " + e.kg + " kg" + (e.note ? " · " + esc(e.note) : ""); } }
-  else if (x.kg) { const g = suggestKg(e.ex, ds); hint += g ? " · " + (g.up ? "go up to " + g.kg + " kg!" : "use " + g.kg + " kg") + (x.per ? " per " + x.per : "") : " · start light"; }
+  let kgSug = g ? g.kg : "";
+  if (e.main && e.kg && !sub) { let k = e.kg; if (fails2(e.ex, ds)) { k = Math.round(k * 0.95 / 2.5) * 2.5; hint += " · 2 times not completed: drop to " + k + " kg"; } kgSug = k; right = "<b>" + k + "</b><small>kg</small>"; hint = esc(fmtSR(e.sr)) + " · " + k + " kg" + (e.note ? " · " + esc(e.note) : "") + (k !== e.kg ? " · −5%" : ""); }
+  else if (sub) hint += " · instead of " + esc(x.n) + (g ? " · use " + g.kg + " kg" : " · find a weight with 2 reps to spare");
+  else if (x.kg) hint += g ? " · " + (g.down ? "2 times not completed: drop to " + g.kg + " kg" : g.up ? "go up to " + g.kg + " kg!" : "use " + g.kg + " kg") + per : " · start light";
   let inputs = "";
-  if (x.kg) inputs = '<div class="row" style="margin-top:10px;gap:8px" onclick="event.stopPropagation()"><input class="inp" style="width:96px;padding:8px 10px" inputmode="decimal" placeholder="' + (e.kg || "kg") + '" value="' + esc(l.kg || "") + '" onchange="setKg(\'' + ds + "','" + e.ex + '\',this.value)"><span class="sm mu">kg' + (x.per ? " per " + x.per : "") + "</span>" +
-    (e.main ? "" : '<button class="chip" style="margin-left:auto;' + (l.top ? "background:var(--lime);color:var(--limeInk)" : "") + '" onclick="toggleTop(\'' + ds + "','" + e.ex + '\')">' + (l.top ? "✓ All reps done" : "All reps done?") + "</button>") + "</div>";
-  return '<div class="ex" style="display:block" onclick="tech(\'' + e.ex + '\')"><div class="row sp"><div><div class="n">' + x.n + '</div><div class="s">' + hint + '</div></div><div class="k">' + right + "</div></div>" + inputs + "</div>";
+  if (x.kg || sub) inputs = '<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap" onclick="event.stopPropagation()"><input class="inp" style="width:96px;padding:8px 10px" inputmode="decimal" placeholder="' + (kgSug || "kg") + '" value="' + esc(l.kg || "") + '" onchange="setKg(\'' + ds + "','" + id + '\',this.value)"><span class="sm mu">kg' + per + "</span>" +
+    (false ? "" : '<button class="chip" style="margin-left:auto;' + (l.top ? "background:var(--lime);color:var(--limeInk)" : l.fail ? "background:rgba(255,107,94,.18);color:var(--red)" : "") + '" onclick="toggleTop(\'' + ds + "','" + id + '\')">' + (l.top ? "✓ All reps done" : l.fail ? "✗ Not completed" : "All reps done?") + "</button>") +
+    (l.fail ? '<input class="inp" style="flex:1;min-width:140px;padding:8px 10px" placeholder="Reps you got: 8, 8, 6" value="' + esc(l.reps || "") + '" onchange="setReps(\'' + ds + "','" + id + '\',this.value)">' : "") + "</div>";
+  return '<div class="ex" style="display:block" onclick="tech(\'' + e.ex + '\')"><div class="row sp"><div><div class="n">' + esc(sub || x.n) + (SUBS[e.ex] ? ' <a class="sm" style="font-weight:600;white-space:nowrap" onclick="event.stopPropagation();swapEx(\'' + ds + "','" + e.ex + '\')">↔ Swap</a>' : "") + '</div><div class="s">' + hint + '</div></div><div class="k">' + right + "</div></div>" + inputs + "</div>";
 }
 function setKg(ds, ex, v) { const n = parseFloat(String(v).replace(",", ".")); S.logs[ds] = S.logs[ds] || {}; S.logs[ds][ex] = Object.assign({}, S.logs[ds][ex], { kg: isNaN(n) ? "" : n }); save(); schedPush(); }
-function toggleTop(ds, ex) { S.logs[ds] = S.logs[ds] || {}; const l = S.logs[ds][ex] = S.logs[ds][ex] || {}; l.top = !l.top; save(); renderHoy(); schedPush(); }
+function toggleTop(ds, ex) {
+  S.logs[ds] = S.logs[ds] || {}; const l = S.logs[ds][ex] = S.logs[ds][ex] || {};
+  if (l.top) { l.top = false; l.fail = true; } else if (l.fail) { l.fail = false; l.reps = ""; } else l.top = true;
+  save(); renderHoy(); schedPush();
+}
 function testHTML(s, ds) {
   const t = S.tests.find(function (x) { return x.d === ds; }) || {};
   return '<div class="sec">Results</div><div class="card"><div class="g2">' + s.fields.map(function (k) {
