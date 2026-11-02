@@ -177,7 +177,10 @@ const OWNER = "MARLEEN";
 const START = "2026-10-12";      // Monday, week 1
 const END = "2027-07-25";        // end of season
 const WEEKS = 41;
-const PRE = { "2026-10-12": "TU" };   // upper test done with Felipe on Monday 12 Oct
+const PRE = { "2026-10-12": "TU",     // upper test done with Felipe on Monday 12 Oct
+  "2026-11-13": "ACT", "2026-11-14": "COMP", "2026-11-15": "COMP" };   // the big competition (2 days)
+// Competitions: the weeks before get lighter and sharper; tests move to after the competition
+const COMPS = [{ d: "2026-11-14", days: 2, start: "10:00", name: "Competition" }];
 const LS = "hybrid_marleen_v1";
 const SELF = "https://felipehernandezlopez.github.io/hybrid-marleen/";
 // Polar only accepts Felipe's app as return address: it relays the code to Marleen's sheet and sends her back here
@@ -197,7 +200,7 @@ const REST_DOW = 1;                 // Tuesday: always rest
 const GYM_DAYS = [0, 2, 4, 5];      // Mon, Wed, Fri mornings + Saturday
 const BACKUP_DOW = 6;               // Sunday: rest, or catch-up if a session is still missing
 const NO_LEGS = [2, 3, 4];          // no heavy legs Wed–Fri: Thursday is a double fencing day
-const PREF = { 0: ["P", "L", "TL", "U", "TU", "F"], 2: ["U", "TU", "P", "F"], 4: ["F", "U", "TU", "P"], 5: ["L", "TL", "P", "U", "TU", "F"], 6: ["L", "TL", "U", "TU", "P", "F"] };
+const PREF = { 0: ["RS", "RSL", "P", "L", "TL", "U", "TU", "F"], 2: ["U", "TU", "P", "F"], 4: ["RS2", "F", "U", "TU", "P"], 5: ["L", "TL", "P", "U", "TU", "F"], 6: ["L", "TL", "U", "TU", "P", "F"] };
 const LEGS = { L: 1, TL: 1 };
 
 // 25 y · 172 cm · 55 kg → 60 kg · iron controlled with pills
@@ -247,6 +250,7 @@ const EX = {
   depth:   { n: "Depth jump", g: "Power", c: ["Step off a low box (30 cm).", "Touch the ground and explode up immediately: ground contact as short as possible."], k: "Reactive speed: the instant counter-attack." },
   mbrot:   { n: "Med-ball rotational throw", g: "Power", c: ["Side-on to a wall, 3-4 kg ball.", "Load the back hip, rotate and throw hard into the wall.", "Both sides."] },
   flunge:  { n: "Explosive fencing lunge + recovery", g: "Power", c: ["From guard, lunge as fast as possible (no weapon or with it).", "Recover back to guard explosively.", "Full rest between sets: speed, not fatigue."], k: "Turns gym strength into your actual fencing movement." },
+  fsprint: { n: "Fencing repeated sprints", g: "Conditioning", c: ["8 s all-out: advance-advance-lunge, retreat, fleche-style burst, change direction — like the end of a hard action.", "20 s easy footwork or walking, then go again.", "6 reps = 1 block. 3 min easy between blocks.", "The last rep must be as fast as the first: that is the whole point."], k: "Trains exactly what failed at 8-1: staying explosive when the bout gets long and tight." },
   sprint:  { n: "10 m sprint from guard", g: "Power", c: ["Start in fencing guard.", "Turn and sprint 10 m all-out.", "Walk back: full recovery."] },
   hclean:  { n: "Hang power clean", g: "Power", kg: true, c: ["Bar above the knees, flat back.", "Jump: extend the hips explosively and shrug.", "Catch on the shoulders in a quarter squat."], k: "Explosive hip extension, the engine of a fast attack." },
   fsq:     { n: "Front squat", g: "Legs", kg: true, c: ["Bar on the front of the shoulders, elbows high.", "Sit straight down, chest tall, drive up."] },
@@ -271,15 +275,27 @@ const KEYS = {
   F: { n: "Upper & core · light", sub: "Shoulders, core, adductors, mobility · 35 min · fencing tonight", warm: "upper", ex: [
     ["pullup", ["3×3", "3×3", "3×3"], "Easy, perfect reps"], ["dbrow", ["3×10/side", "3×10/side", "2×10/side"], "Light"], ["extrot", ["2×15/side", "3×12/side", "3×12/side"], ""],
     ["pallof", ["3×10/side", "3×10/side", "3×10/side"], ""], ["copen", ["2×15 s/side", "3×15 s/side", "3×20 s/side"], ""], ["calf", ["2×12/leg", "2×12/leg", "2×10/leg"], "Bodyweight is fine"]] },
+  RS: { n: "Repeated sprints", sub: "End-of-bout fatigue, fencing style · 25 min", warm: "power", ex: [
+    ["fsprint", ["3 × (6 × 8 s / 20 s) · 3' between", "3 × (6 × 8 s / 20 s) · 3' between", "3 × (6 × 8 s / 20 s) · 3' between"], "Every rep all-out"], ["flunge", ["2×4/side", "2×4/side", "2×4/side"], "Sharp and fast"], ["pallof", ["2×10/side", "2×10/side", "2×10/side"], ""]] },
+  RS2: { n: "Repeated sprints · 2", sub: "Same as Monday: finish strong · 25 min", warm: "power", ex: [
+    ["fsprint", ["3 × (6 × 8 s / 20 s) · 3' between", "3 × (6 × 8 s / 20 s) · 3' between", "3 × (6 × 8 s / 20 s) · 3' between"], "The last rep as fast as the first"], ["broad", ["3×2", "3×2", "3×2"], "Max effort, full rest"]] },
+  RSL: { n: "Sharp sprints · short", sub: "Competition week: stay fast, stay fresh · 20 min", warm: "power", ex: [
+    ["fsprint", ["2 × (5 × 6 s / 30 s) · 3' between", "2 × (5 × 6 s / 30 s) · 3' between", "2 × (5 × 6 s / 30 s) · 3' between"], "Fast, never tired"], ["broad", ["3×1", "3×1", "3×1"], ""]] },
+  ACT: { n: "Activation · day before", sub: "20 min · feel fast, not tired", warm: "power", ex: [
+    ["sprint", ["3×10 m", "3×10 m", "3×10 m"], "Relaxed and fast"], ["broad", ["3×1", "3×1", "3×1"], "Smooth"], ["flunge", ["2×3/side", "2×3/side", "2×3/side"], ""]] },
+  COMP: { n: "Competition day", sub: "Your plan for the day", comp: true, ex: [] },
   TU: { n: "Upper test", sub: "5RM bench + press, pull-ups, row 2k · 70 min", warm: "upper", test: ["bench", "ohp", "preps", "pull", "row2k"],
     info: ["Bench and overhead press: work up to the heaviest clean set of 5 (bar×8 · 50%×5 · 70%×3 · 85%×2 · then sets of 5 adding 2.5 kg).", "Pull-ups: max strict reps. If you get more than 8, also find your 5-rep max with added weight.", "Row: 2,000 m all-out, damper 6 (always the same)."] },
   TL: { n: "Lower test", sub: "5RM squat + deadlift, broad jump · 60 min", warm: "lower", test: ["squat", "dl", "jump"],
     info: ["Broad jump first, fresh: best of 3, measured from the toes to the back heel.", "Squat and deadlift: work up to the heaviest clean set of 5 (bar×8 · 50%×5 · 70%×3 · 85%×2 · then sets of 5 adding 2.5-5 kg).", "Technique first: stop when a rep slows down or the form breaks."] }
 };
 const KEY_ORDER = ["U", "L", "P", "F"];
-const SHORTN = { U: "Upper", L: "Lower", P: "Power", F: "Core", TU: "Test", TL: "Test" };
+const SHORTN = { U: "Upper", L: "Lower", P: "Power", F: "Core", TU: "Test", TL: "Test", RS: "Sprint", RS2: "Sprint", RSL: "Sprint", ACT: "Activ.", COMP: "COMP" };
 function keysOf(w) {
   if (w === 0) return ["TL", "P", "F"];                       // Monday was the upper test
+  if (w === 3) return ["RS", "U", "RS2", "L"];                // competition prep (14 Nov): no tests, repeated sprints
+  if (w === 4) return ["RSL", "U"];                           // competition week: light and sharp
+  if (w === 5) return ["TL", "TU", "P", "F"];                 // the tests, moved to after the competition
   if (weekInfo(w).deload) return ["TL", "TU", "P", "F"];      // every 4th week: lighter + new tests
   return KEY_ORDER;
 }
@@ -333,7 +349,8 @@ function closeModal() { $("mbg").classList.remove("on"); $("modal").classList.re
 // ═══════════════════════════════════════════
 //  SEASON · 3 blocks, every 4th week lighter + tests
 // ═══════════════════════════════════════════
-function weekInfo(w) { return { w: w, ph: w < 12 ? 1 : w < 24 ? 2 : 3, l: w % 4, deload: w % 4 === 3 }; }
+function weekInfo(w) { return { w: w, ph: w < 12 ? 1 : w < 24 ? 2 : 3, l: w % 4, deload: w % 4 === 3 || w === 4, comp: w === 3 ? "prep" : w === 4 ? "week" : "" }; }
+function weekTag(wi) { return wi.comp === "prep" ? "Competition prep" : wi.comp === "week" ? "Competition week" : wi.deload ? "Light + tests" : ""; }
 function posOf(ds) { const d = diff(ds, START); if (d < 0) return null; const w = Math.floor(d / 7); return w >= WEEKS ? null : weekInfo(w); }
 // Sets × reps at % of 5RM for the main lifts
 function scheme(wi) {
@@ -383,6 +400,7 @@ function rowSplit() { const t = S.lifts.row2k ? parseT(S.lifts.row2k) : null; re
 function keySession(k, wi, ds) {
   const K = KEYS[k];
   if (K.test) return { type: "test", key: k, t: K.n, sub: K.sub, warm: K.warm, cool: "cool", wi: wi, info: K.info, fields: K.test };
+  if (K.comp) return { type: "comp", key: k, t: (ds === COMPS[0].d ? "Competition · day 1" : "Competition · day 2"), sub: "Start " + COMPS[0].start + " · your plan for the day", wi: wi };
   const ph = wi ? wi.ph : 1, sc = wi ? scheme(wi) : { s: 3, r: 8, p: 0.75 };
   const list = [];
   K.ex.forEach(function (e) {
@@ -398,7 +416,10 @@ function keySession(k, wi, ds) {
     list.push({ ex: e[0], sr: sr, note: e[2] });
   });
   const s = { type: "gym", key: k, t: K.n, sub: K.sub, warm: K.warm, cool: "cool", wi: wi, list: list };
-  if (wi && wi.deload) s.why = "Lighter week: fewer sets, so the tests feel fresh.";
+  if (wi && wi.comp === "prep") s.why = "Competition prep (14 Nov): fewer sets, same intent. Save your legs for the piste.";
+  else if (wi && wi.comp === "week") s.why = "Competition week: light and sharp. You should leave the gym feeling fast, not tired.";
+  else if (wi && wi.deload) s.why = "Lighter week: fewer sets, so the tests feel fresh.";
+  if (k === "ACT") s.info = ["Tomorrow is the competition. This is only to wake the body up.", "Then: pack your bag, carb-rich dinner, 8-9 h of sleep. Your plan for tomorrow is below."];
   return s;
 }
 function special(kind, wi) {
@@ -566,7 +587,7 @@ function renderHoy() {
     "<small>" + (ds === todayS() ? "TODAY" : '<a onclick="goto(todayS())">BACK TO TODAY</a>') + '</small></div><button onclick="goto(addD(viewDate,1))">›</button></div>';
   if (!s) { $("p-hoy").innerHTML = h + '<div class="hero"><h1>Off season</h1><p>Outside the 26/27 season.</p>' + ART.sky + "</div>"; return; }
   const wi = s.wi;
-  h += '<div class="hero"><span class="pill l">Week ' + (wi.w + 1) + " · " + PHASE[wi.ph] + "</span>" + (wi.deload ? ' <span class="pill w">Light + tests</span>' : "") + (FENCE[dw] !== undefined ? ' <span class="pill o">Fencing ' + FENCE[dw] + "</span>" : "") +
+  h += '<div class="hero"><span class="pill l">Week ' + (wi.w + 1) + " · " + PHASE[wi.ph] + "</span>" + (weekTag(wi) ? ' <span class="pill w">' + weekTag(wi) + "</span>" : "") + (FENCE[dw] !== undefined ? ' <span class="pill o">Fencing ' + FENCE[dw] + "</span>" : "") +
     "<h1>" + s.t + "</h1><p>" + s.sub + "</p>" + ART.sky + "</div>";
   h += coachHTML(ds) + weekCardHTML(ds) + fenceHTML(ds) + actsHTML(ds);
   if (s.why) h += '<div class="knee" style="margin:0 0 12px">' + esc(s.why) + "</div>";
@@ -580,13 +601,36 @@ function renderHoy() {
     if (s.type === "gym" && s.list.length > 4) h += '<div class="chips" style="margin:2px 0 12px"><button class="chip" style="' + (sh ? "background:var(--lime);color:var(--limeInk)" : "") + '" onclick="toggleShortS(\'' + ds + '\')">' + (sh ? "✓ Short version: first 4 exercises" : "Short on time? 30-min version") + "</button></div>";
   }
   if (s.finisher) h += '<p class="sm mu" style="margin:4px 2px 12px">' + esc(s.finisher) + "</p>";
-  if (s.type === "test") h += testHTML(s, ds);
+  if (s.type === "test") h += targetsHTML(s, ds) + testHTML(s, ds);
+  if (s.type === "comp" || (s.key === "ACT")) h += (s.key === "ACT" ? '<div class="sec" style="color:var(--lime)">Tomorrow: your competition plan</div>' : "") + compHTML(s.key === "ACT" ? addD(ds, 1) : ds);
   if (s.type === "gym" || s.type === "test") h += doneHTML(s, ds);
   if (!PRE[ds] && ds >= todayS() && !S.done[ds] && !s.fenceDay) h += '<button class="btn2" style="width:100%;margin:-4px 0 12px" onclick="choosePick(\'' + ds + '\')">' + (s.type === "rest" ? "I want to train today" : "Change session") + "</button>";
   if (s.cool) h += mobHTML(s.cool);
   h += bodyHTML(ds) + nutHTML(ds, s);
   $("p-hoy").innerHTML = h;
 }
+// ═══════════════════════════════════════════
+//  COMPETITION DAY · the plan, as a checklist she can tick
+// ═══════════════════════════════════════════
+const COMP_PLAN = [
+  ["The night before", ["Carb-rich dinner: pasta or rice + protein", "Pack the bag: 1.5 L water bottle, electrolytes, 4 bananas, rice cakes + honey, 1 sandwich, 2 gels, warm clothes for between bouts", "Lights out early: 8-9 h of sleep"]],
+  ["Morning (start 10:00)", ["Wake up 6:45", "7:00 breakfast: oats + eggs + banana + honey (coffee only if you always have it)", "8:30 small snack: a banana", "9:15 full warm-up 20 min: pulse, mobility, footwork, 3 short sprints"]],
+  ["During the day", ["Every 45-60 min: ½-1 banana, 2 rice cakes with honey, or a gel", "Drink 500-750 ml per hour (Powerade + water)", "Break longer than 1 h: half a sandwich or a yogurt", "Before every direct elimination: re-warm 8-10 min + ½ banana or a gel 15 min before"]],
+  ["In the bout", ["After every touch: long breath out, think only of the NEXT touch, never the score", "Big lead? Keep attacking with the same plan, don't protect it", "At the 1-minute break: water + 2 tactical points, nothing more"]],
+  ["After day 1", ["Within 1 h: a real meal with carbs + protein", "1 L of water before bed", "Legs up 10 min, light stretch, early night — day 2 starts the same way"]]
+];
+function compHTML(ds) {
+  const chk = (S.compChk || {})[ds] || {};
+  let h = '<div class="knee" style="margin:0 0 12px">Last time: breakfast at 9:00 and nothing more until the first bout at 14:00 — 5 hours without food. This plan keeps your energy topped up all day.</div>';
+  COMP_PLAN.forEach(function (sec, i) {
+    h += '<div class="sec">' + sec[0] + '</div><div class="list">' + sec[1].map(function (it, j) {
+      const id = i + "_" + j, on = !!chk[id];
+      return '<div class="li" style="cursor:pointer;justify-content:flex-start;gap:10px" onclick="compTick(\'' + ds + "','" + id + '\')"><span style="width:20px;color:var(--lime);font-weight:700">' + (on ? "✓" : "○") + '</span><span style="' + (on ? "opacity:.55;text-decoration:line-through" : "") + '">' + esc(it) + "</span></div>";
+    }).join("") + "</div>";
+  });
+  return h;
+}
+function compTick(ds, id) { S.compChk = S.compChk || {}; S.compChk[ds] = S.compChk[ds] || {}; S.compChk[ds][id] = !S.compChk[ds][id]; save(); renderHoy(); }
 function fenceHTML(ds) {
   const dw = dow(ds); if (FENCE[dw] === undefined && !S.fenceMark[ds] && !dayActs(ds).some(function (x) { return isFenceAct(x, ds); })) return "";
   const a = dayActs(ds).filter(function (x) { return isFenceAct(x, ds); });
@@ -641,6 +685,31 @@ function toggleTop(ds, ex) {
   S.logs[ds] = S.logs[ds] || {}; const l = S.logs[ds][ex] = S.logs[ds][ex] || {};
   if (l.top) { l.top = false; l.fail = true; } else if (l.fail) { l.fail = false; l.reps = ""; } else l.top = true;
   save(); renderHoy(); schedPush();
+}
+// Test days: the mark to beat, the target, and how much to add after each set
+const TGT = { squat: ["Squat", 2.5, 5], dl: ["Deadlift", 5, 10], bench: ["Bench", 1.25, 2.5], ohp: ["Press", 1.25, 2.5], pull: ["Pull-up (+kg)", 1.25, 2.5] };
+let _tj = {};
+function targetsHTML(s, ds) {
+  let h = '<div class="sec">Today\'s targets</div><div class="card" style="padding:12px 14px">';
+  s.fields.forEach(function (k) {
+    if (TGT[k]) {
+      const prev = +S.lifts[k] || 0, a = TGT[k][1], b = TGT[k][2], cur = _tj[k] != null ? _tj[k] : prev;
+      h += '<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="row sp"><b>' + TGT[k][0] + '</b><span class="sm mu">mark to beat <b style="color:var(--tx)">' + (prev ? prev + " kg" : "first test") + "</b></span></div>" +
+        (prev ? '<div class="sm mu2">Target: <b style="color:var(--lime)">' + (prev + a) + "–" + (prev + b) + " kg</b></div>" : '<div class="sm mu2">First time: start light and build up in sets of 5.</div>') +
+        '<div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap"><span class="sm mu">Set of 5 with</span><input class="inp" style="width:74px;padding:6px 8px" inputmode="decimal" value="' + cur + '" onchange="_tj[\'' + k + '\']=parseFloat(this.value.replace(\',\',\'.\'))||0"><span class="sm mu">kg, how was it?</span></div>' +
+        '<div class="chips" style="margin-top:6px"><button class="chip" onclick="tj(\'' + k + '\',' + b + ')">Easy · +' + b + '</button><button class="chip" onclick="tj(\'' + k + '\',' + a + ')">Good · +' + a + '</button><button class="chip" onclick="tj(\'' + k + '\',0)">Hard · stop</button></div>' +
+        '<div class="sm" id="tjm-' + k + '" style="margin-top:6px;color:var(--lime)"></div></div>';
+    } else if (k === "preps") h += '<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>Pull-ups</b><div class="sm mu2">Mark to beat <b style="color:var(--tx)">' + (S.lifts.pullreps || "—") + ' reps</b> · target <b style="color:var(--lime)">+1–2 reps</b></div></div>';
+    else if (k === "jump") h += '<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>Broad jump</b><div class="sm mu2">' + (S.lifts.jump ? "Mark to beat <b style=\"color:var(--tx)\">" + S.lifts.jump + " cm</b> · target <b style=\"color:var(--lime)\">+5–10 cm</b>" : "First test: best of 3 jumps") + "</div></div>";
+    else if (k === "row2k") h += '<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>Row 2k</b><div class="sm mu2">Last time: 1780 m in 8:05 (≈ 9:05 for 2k) · target <b style="color:var(--lime)">under 9:00</b> · hold ' + mmss(rowSplit() - 2) + " /500 m</div></div>";
+  });
+  return h + '<p class="sm mu" style="margin-top:8px">After each set of 5: <b>Easy</b> (3+ reps left) → big jump · <b>Good</b> (~2 left) → small jump · <b>Hard</b> (1 or 0 left, or slow bar) → stop: that is your mark.</p></div>';
+}
+function tj(k, inc) {
+  const cur = _tj[k] != null ? _tj[k] : +S.lifts[k] || 0, el = document.getElementById("tjm-" + k);
+  if (!inc) { el.textContent = "That's today's mark: " + cur + " kg. Write it in Results."; return; }
+  _tj[k] = cur + inc; const y = $("p-hoy").scrollTop; renderHoy(); $("p-hoy").scrollTop = y;
+  const e2 = document.getElementById("tjm-" + k); if (e2) e2.textContent = "Next set of 5: " + _tj[k] + " kg. Rest 3 min.";
 }
 function testHTML(s, ds) {
   const t = S.tests.find(function (x) { return x.d === ds; }) || {};
@@ -782,7 +851,7 @@ function weekHTML(ws, wi, t) {
     days += '<button class="day ' + (!s || s.type === "rest" ? "rest " : "") + (ds === t ? "today " : "") + (S.done[ds] ? "ok" : "") + '" onclick="goto(\'' + ds + '\')">' + DN[d] + "<small>" + shortName(s, ds) + "</small></button>";
   }
   const cur = t >= ws && t <= addD(ws, 6);
-  return '<div class="wk ' + (cur ? "cur" : "") + '"><div class="row sp"><b>Week ' + (wi.w + 1) + ' <span class="mu sm" style="font-weight:500">· ' + fdate(ws) + "</span></b>" + (wi.deload ? '<span class="pill w">Light + tests</span>' : "") + '</div><div class="days">' + days + "</div></div>";
+  return '<div class="wk ' + (cur ? "cur" : "") + '"><div class="row sp"><b>Week ' + (wi.w + 1) + ' <span class="mu sm" style="font-weight:500">· ' + fdate(ws) + "</span></b>" + (weekTag(wi) ? '<span class="pill w">' + weekTag(wi) + "</span>" : "") + '</div><div class="days">' + days + "</div></div>";
 }
 
 // ═══════════════════════════════════════════
@@ -885,8 +954,21 @@ function nightOf(ds) {
 function avgOf(a) { a = a.filter(function (v) { return v != null; }); return a.length ? a.reduce(function (s, v) { return s + v; }, 0) / a.length : null; }
 function sleepAvg(from, to, i) { return avgOf((S.sleeph || []).filter(function (r) { return r[0] >= from && r[0] <= to; }).map(function (r) { return chNum(r[i]); })); }
 function n1(v) { return String(Math.round(v * 10) / 10); }
+function dataReminders(ds) {
+  const out = [];
+  const nx = COMPS.filter(function (c) { return c.d >= ds; })[0];
+  if (nx && diff(nx.d, ds) <= 13) out.push(diff(nx.d, ds) === 0 ? "Competition day! Follow your plan below, one touch at a time." : diff(nx.d, ds) + " day" + (diff(nx.d, ds) > 1 ? "s" : "") + " to the competition (" + fdate(nx.d) + ").");
+  const lastB = S.body.length ? S.body[S.body.length - 1].d : null;
+  if ((!lastB || diff(ds, lastB) >= 7) && dow(ds) !== 0) out.push("Log your weight: Mondays, fasted (below). It's how we see you getting to 60 kg.");
+  const long = Object.keys(S.acts).filter(function (d) { return d <= ds && diff(ds, d) <= 14; }).map(function (d) { return [d, dayActs(d).filter(function (a) { return (+a.min || 0) >= 600; })[0]]; }).filter(function (x) { return x[1]; })[0];
+  if (long) out.push("Your watch recorded " + Math.round(long[1].min / 60) + " h on " + fdate(long[0]) + ": remember to stop it after training. You can trim it in Polar Flow.");
+  const s = sessionFor(ds);
+  if (s && s.type === "gym" && s.list && s.list.some(function (e) { return EX[e.ex].kg; })) out.push("Log your kg in each exercise and tap \"All reps done?\": that's how the app raises your loads.");
+  if (s && s.type === "test") out.push("Test day: the target for each lift is shown below. Write every result in Results.");
+  return out;
+}
 function coachDay(ds) {
-  const s = sessionFor(ds), n = nightOf(ds), out = [], dw = dow(ds);
+  const s = sessionFor(ds), n = nightOf(ds), out = dataReminders(ds), dw = dow(ds);
   const gym = s && (s.type === "gym" || s.type === "test"), fence = FENCE[dw] !== undefined, train = gym || fence;
   if (n && ((n.nr != null && n.nr <= 2) || (n.ans != null && n.ans <= -6))) out.push(train ? "Low recovery last night (" + (n.nr != null ? n.nr + "/6" : "ANS " + n.ans) + "): " + (gym ? "drop the gym loads by 10-15% and keep the jumps few and sharp." : "fence, but listen to your body.") : "Low recovery last night: make today a real rest day and go to bed early.");
   else if (n && n.hours != null && n.hours < 7) out.push("You slept " + n1(n.hours) + " h: train as planned, no records today, and aim for 8 h tonight.");
