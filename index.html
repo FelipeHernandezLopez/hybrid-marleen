@@ -691,16 +691,18 @@ const TGT = { squat: ["Squat", 2.5, 5], dl: ["Deadlift", 5, 10], bench: ["Bench"
 let _tj = {};
 function targetsHTML(s, ds) {
   let h = '<div class="sec">Today\'s targets</div><div class="card" style="padding:12px 14px">';
+  const before = S.tests.filter(function (t) { return t.d < ds; }), today = S.tests.find(function (t) { return t.d === ds; }) || {};
+  const prevOf = function (k) { const t = before.filter(function (x) { return x[k] != null && x[k] !== ""; }).pop(); return t ? t[k] : ""; };
   s.fields.forEach(function (k) {
     if (TGT[k]) {
-      const prev = +S.lifts[k] || 0, a = TGT[k][1], b = TGT[k][2], cur = _tj[k] != null ? _tj[k] : prev;
+      const prev = +prevOf(k) || 0, a = TGT[k][1], b = TGT[k][2], cur = _tj[k] != null ? _tj[k] : prev;
       h += '<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="row sp"><b>' + TGT[k][0] + '</b><span class="sm mu">mark to beat <b style="color:var(--tx)">' + (prev ? prev + " kg" : "first test") + "</b></span></div>" +
         (prev ? '<div class="sm mu2">Target: <b style="color:var(--lime)">' + (prev + a) + "–" + (prev + b) + " kg</b></div>" : '<div class="sm mu2">First time: start light and build up in sets of 5.</div>') +
         '<div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap"><span class="sm mu">Set of 5 with</span><input class="inp" style="width:74px;padding:6px 8px" inputmode="decimal" value="' + cur + '" onchange="_tj[\'' + k + '\']=parseFloat(this.value.replace(\',\',\'.\'))||0"><span class="sm mu">kg, how was it?</span></div>' +
         '<div class="chips" style="margin-top:6px"><button class="chip" onclick="tj(\'' + k + '\',' + b + ')">Easy · +' + b + '</button><button class="chip" onclick="tj(\'' + k + '\',' + a + ')">Good · +' + a + '</button><button class="chip" onclick="tj(\'' + k + '\',0)">Hard · stop</button></div>' +
-        '<div class="sm" id="tjm-' + k + '" style="margin-top:6px;color:var(--lime)"></div></div>';
-    } else if (k === "preps") h += '<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>Pull-ups</b><div class="sm mu2">Mark to beat <b style="color:var(--tx)">' + (S.lifts.pullreps || "—") + ' reps</b> · target <b style="color:var(--lime)">+1–2 reps</b></div></div>';
-    else if (k === "jump") h += '<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>Broad jump</b><div class="sm mu2">' + (S.lifts.jump ? "Mark to beat <b style=\"color:var(--tx)\">" + S.lifts.jump + " cm</b> · target <b style=\"color:var(--lime)\">+5–10 cm</b>" : "First test: best of 3 jumps") + "</div></div>";
+        '<div class="sm" id="tjm-' + k + '" style="margin-top:6px;color:var(--lime)"></div>' + (today[k] ? '<div class="sm" style="color:var(--lime);margin-top:4px">Today: <b>' + today[k] + " kg</b>" + (+today[k] > prev ? " ✓ new mark" : "") + "</div>" : "") + "</div>";
+    } else if (k === "preps") h += '<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>Pull-ups</b><div class="sm mu2">Mark to beat <b style="color:var(--tx)">' + (prevOf("preps") || "—") + ' reps</b> · target <b style="color:var(--lime)">+1–2 reps</b></div></div>';
+    else if (k === "jump") h += '<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>Broad jump</b><div class="sm mu2">' + (prevOf("jump") ? "Mark to beat <b style=\"color:var(--tx)\">" + prevOf("jump") + " cm</b> · target <b style=\"color:var(--lime)\">+5–10 cm</b>" : "First test: best of 3 jumps") + "</div></div>";
     else if (k === "row2k") h += '<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>Row 2k</b><div class="sm mu2">Last time: 1780 m in 8:05 (≈ 9:05 for 2k) · target <b style="color:var(--lime)">under 9:00</b> · hold ' + mmss(rowSplit() - 2) + " /500 m</div></div>";
   });
   return h + '<p class="sm mu" style="margin-top:8px">After each set of 5: <b>Easy</b> (3+ reps left) → big jump · <b>Good</b> (~2 left) → small jump · <b>Hard</b> (1 or 0 left, or slow bar) → stop: that is your mark.</p></div>';
