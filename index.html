@@ -797,20 +797,49 @@ function nutHTML(ds, s) {
     '<p class="sm mu" style="margin-top:10px">' + (gym && fence ? "Double day: big breakfast, and carbs + protein 2-3 h before fencing. " : fence ? "Carbs + protein 2-3 h before fencing. " : "") +
     "Iron pills with vitamin C (orange juice), not with coffee, tea or dairy. Aim for +0.25-0.5 kg a week.</p></div>";
 }
-// Protein in one tap (goal 110 g) + iron pill. Saved to the sheet (Registro) as "Protein of the day".
-const PROT_BTN = [["Eggs + yogurt", 30], ["Chicken / meat / fish 150 g", 35], ["Protein shake", 25], ["Greek yogurt or quark", 20], ["Other meal", 25]];
-function protOf(ds) { return +((S.logs[ds] || {}).prot || {}).kg || 0; }
-function keepScroll(fn) { const y = $("p-hoy").scrollTop; fn(); renderHoy(); $("p-hoy").scrollTop = y; }
-function addProt(ds, g) { keepScroll(function () { S.logs[ds] = S.logs[ds] || {}; const p = S.logs[ds].prot = S.logs[ds].prot || {}; p.kg = Math.max(0, (+p.kg || 0) + g); p.items = (p.items || []).concat([g]); touch(); save(); schedPush(); }); }
-function undoProt(ds) { keepScroll(function () { const p = (S.logs[ds] || {}).prot; if (!p) return; const last = (p.items || []).pop(); p.kg = Math.max(0, (+p.kg || 0) - (last || 0)); touch(); save(); schedPush(); }); }
-function toggleVit(ds) { keepScroll(function () { S.logs[ds] = S.logs[ds] || {}; const v = S.logs[ds].vit = S.logs[ds].vit || {}; v.top = !v.top; touch(); save(); schedPush(); }); }
+// Protein: foods with portion and grams of protein; tap + / − and see what you logged. Saved to the sheet (Registro).
+const FOODS = [
+  ["huevo", "Egg", "1 egg", 6, 0], ["pollo", "Chicken breast", "100 g cooked", 31, 0], ["atun", "Canned tuna", "1 can drained (~120 g)", 26, 0],
+  ["res", "Lean beef", "100 g cooked", 27, 0], ["cerdo", "Minced pork", "100 g cooked", 25, 1], ["pescado", "Fish or salmon", "150 g", 30, 0],
+  ["whey", "Protein powder", "1 scoop (30 g)", 24, 0], ["griego", "Greek yogurt", "1 cup (150 g)", 15, 0], ["cottage", "Cottage cheese / quark", "100 g", 11, 0],
+  ["tofu", "Firm tofu", "100 g", 13, 0], ["gouda", "Gouda cheese", "2 slices (30 g)", 8, 1], ["leche", "Milk", "1 glass (250 ml)", 8, 0], ["lentejas", "Lentils or beans", "1 plate (200 g cooked)", 18, 0]
+];
+const FAT_TXT = "high in fat";
+function protDay(ds) { const p = (S.logs[ds] || {}).prot || {}; return p; }
+function protOf(ds) { return +protDay(ds).kg || 0; }
+function setFood(ds, id, d) {
+  const y = $("p-hoy").scrollTop;
+  S.logs[ds] = S.logs[ds] || {}; const p = S.logs[ds].prot = S.logs[ds].prot || {};
+  if (!p.n && +p.kg) p.extra = +p.kg;      // keeps what was logged with the old buttons
+  p.n = p.n || {};
+  p.n[id] = Math.max(0, (p.n[id] || 0) + d); if (!p.n[id]) delete p.n[id];
+  p.kg = Math.round(FOODS.reduce(function (t, f) { return t + (p.n[f[0]] || 0) * f[3]; }, 0) + (+p.extra || 0));
+  touch(); save(); schedPush(); renderHoy(); $("p-hoy").scrollTop = y;
+}
+function toggleVit(ds) { const y = $("p-hoy").scrollTop; S.logs[ds] = S.logs[ds] || {}; const v = S.logs[ds].vit = S.logs[ds].vit || {}; v.top = !v.top; touch(); save(); schedPush(); renderHoy(); $("p-hoy").scrollTop = y; }
+function protGap(left) {
+  // simple suggestion to close the gap: chicken, tuna, shake, eggs
+  const opts = [[31, function (n) { return n * 100 + " g chicken breast"; }], [26, function (n) { return n + (n > 1 ? " cans" : " can") + " of tuna"; }],
+    [24, function (n) { return n + (n > 1 ? " shakes" : " shake"); }], [6, function (n) { return n + (n > 1 ? " eggs" : " egg"); }]];
+  const out = []; let r = left;
+  opts.forEach(function (o) { if (r <= 4) return; let n = o[0] >= 20 ? Math.min(2, Math.floor(r / o[0])) : Math.ceil(r / o[0]); if (n > 0) { out.push(o[1](n)); r -= n * o[0]; } });
+  return out.join(" + ");
+}
 function protHTML(ds) {
-  const g = protOf(ds), goal = NUT.p, pct = Math.min(100, Math.round(g / goal * 100)), vit = ((S.logs[ds] || {}).vit || {}).top;
-  return '<div class="card" style="padding:12px 14px"><div class="row sp"><b>Protein today</b><span><b style="color:var(--lime);font-family:\'Barlow Condensed\';font-size:22px">' + g + '</b><span class="sm mu"> / ' + goal + " g</span></span></div>" +
-    '<div style="height:6px;border-radius:3px;background:var(--c2);margin:8px 0 10px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:var(--lime)"></div></div>' +
-    '<div class="chips">' + PROT_BTN.map(function (b) { return '<button class="chip" onclick="addProt(\'' + ds + "'," + b[1] + ')">+' + b[1] + " · " + b[0] + "</button>"; }).join("") +
-    (g ? '<button class="chip" style="color:var(--red)" onclick="undoProt(\'' + ds + '\')">↶ undo</button>' : "") + "</div>" +
-    '<button class="chip" style="margin-top:10px;' + (vit ? "background:var(--lime);color:var(--limeInk)" : "") + '" onclick="toggleVit(\'' + ds + '\')">' + (vit ? "✓ Iron pill taken" : "💊 Iron pill taken?") + "</button></div>";
+  const p = protDay(ds), n = p.n || {}, g = protOf(ds), goal = NUT.p, pct = Math.min(100, Math.round(g / goal * 100)), vit = ((S.logs[ds] || {}).vit || {}).top;
+  const chosen = FOODS.filter(function (f) { return n[f[0]]; });
+  let h = '<div class="card" style="padding:12px 14px"><div class="row sp"><b>Protein today</b><span><b style="color:var(--lime);font-family:\'Barlow Condensed\';font-size:26px">' + g + '</b><span class="sm mu"> / ' + goal + " g</span></span></div>" +
+    '<div style="height:8px;border-radius:4px;background:var(--c2);margin:8px 0 8px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:var(--lime)"></div></div>' +
+    '<p class="sm" style="margin-bottom:8px;color:' + (g >= goal ? "var(--lime)" : "var(--mu2)") + '">' + (g >= goal ? "✓ Goal reached" : (goal - g) + " g to go · for example: " + protGap(goal - g)) + "</p>" +
+    (chosen.length || +p.extra || (g && !p.n) ? '<div class="sm mu2" style="margin-bottom:8px">Today: ' + chosen.map(function (f) { return "<b style=\"color:var(--tx)\">" + n[f[0]] + "×</b> " + f[1].toLowerCase(); }).concat(+p.extra || (g && !p.n) ? ["<b style=\"color:var(--tx)\">" + (+p.extra || g) + " g</b> logged earlier"] : []).join(" · ") + "</div>" : "") +
+    '<details' + (chosen.length ? "" : " open") + '><summary class="sm" style="cursor:pointer;color:var(--lime);font-weight:600;padding:4px 0 8px">Add food ▾</summary>';
+  FOODS.forEach(function (f) {
+    const c = n[f[0]] || 0;
+    h += '<div class="row sp" style="padding:7px 0;border-top:1px solid var(--line)"><div style="min-width:0"><div style="font-size:14px;font-weight:600">' + f[1] + (f[4] ? ' <span class="sm" style="color:var(--warn);font-weight:500">· ' + FAT_TXT + "</span>" : "") + '</div><div class="sm mu">' + f[2] + " = <b style=\"color:var(--tx)\">" + f[3] + " g</b> protein</div></div>" +
+      '<div class="row" style="gap:6px;flex-shrink:0"><button class="chip" style="width:34px;padding:7px 0" onclick="setFood(\'' + ds + "','" + f[0] + '\',-1)">−</button>' +
+      '<b style="min-width:22px;text-align:center;color:' + (c ? "var(--lime)" : "var(--mu)") + '">' + c + '</b><button class="chip" style="width:34px;padding:7px 0;' + (c ? "background:var(--lime);color:var(--limeInk)" : "") + '" onclick="setFood(\'' + ds + "','" + f[0] + '\',1)">+</button></div></div>';
+  });
+  return h + "</details>" + '<button class="chip" style="margin-top:10px;' + (vit ? "background:var(--lime);color:var(--limeInk)" : "") + '" onclick="toggleVit(\'' + ds + '\')">' + (vit ? "✓ Iron pill taken" : "💊 Iron pill taken?") + "</button></div>";
 }
 function wkAvgKg(ds) { const ws = addD(ds, -dow(ds)), a = S.body.filter(function (b) { return b.kg && b.d >= ws && b.d <= addD(ws, 6); }); return a.length > 1 ? Math.round(a.reduce(function (x, b) { return x + +b.kg; }, 0) / a.length * 10) / 10 : null; }
 function bodyHTML(ds) {
